@@ -2,7 +2,6 @@
   "created_at": "2026-11-14T00:00:00Z",
   "description": "Experimental Brother HL-L8260CDW fixed paper-capability responses for Brother Print Service Plugin 1.17.0. Not yet tested on an Android device through Morphe.",
   "download_url": "https://raw.githubusercontent.com/pholcroft/brother-morphe-patches/main/patches-1.0.0.mpp",
-  "signature_download_url": "",
-  "version": "1.0.0",
-  "public_key": ""
+  "version": "1.0.0"
 }
+
