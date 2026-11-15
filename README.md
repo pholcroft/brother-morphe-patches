@@ -27,6 +27,10 @@ The cache uses the printer's IP address; a MAC address may be recorded but is no
 
 Read the [technical analysis and packet timelines](TECHNICAL-ANALYSIS.md) for the measurements, proposed improvements and evidence limits. The public source contains no APK, packet capture, private snapshot or private printer address.
 
+## Help improve support for more printers
+
+Have another Brother model or one with extra features? A short recording of the print service's network traffic can help us understand its requests and improve the cache. Follow the [PCAPdroid capture and contribution guide](CAPTURING-PRINTER-TRAFFIC.md), including the privacy checks before sharing.
+
 ## Development
 
 Build with `./gradlew buildAndroid`, Java 17+, Android SDK 36 and access to Morphe's GitHub Packages dependencies. Tests under `tests/` use simulated Brother classes and contain no proprietary APK code.
