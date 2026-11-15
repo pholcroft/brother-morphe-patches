@@ -39,6 +39,23 @@ public final class AutoCache {
         return oid!=null && oid.matches("[0-9]+(\\.[0-9]+)+") ? oid:null;
     }
     private static String key(String ip,String oid){return "entry|"+ip+"|"+oid;}
+    private static void diagnosticResult(String source,Object result){
+        if(!Diagnostics.isRecording())return;
+        try{
+            String state=result==null?"No result":String.valueOf(result.getClass().getField("state").get(result));
+            String type="",value="";
+            if(result!=null && state.equals("SuccessRequest")){
+                Object values=result.getClass().getField("results").get(result);
+                if(values!=null && Array.getLength(values)==1){
+                    Object v=Array.get(values,0).getClass().getMethod("getValue").invoke(Array.get(values,0));
+                    if(v!=null && v.getClass().getName().equals(WEST+"AsnOctets")){byte[] bytes=(byte[])v.getClass().getMethod("getBytes").invoke(v);if(bytes.length<=8192){type="octets_base64";value=Base64.encodeToString(bytes,Base64.NO_WRAP);}else type="too_large";}
+                    else if(v!=null && v.getClass().getName().equals(WEST+"AsnInteger")){type="integer";value=String.valueOf(v.getClass().getMethod("getValue").invoke(v));}
+                    else if(v!=null)type="unsupported";
+                }
+            }
+            Diagnostics.finish(source,state,type,value);
+        }catch(Exception|LinkageError ignored){Diagnostics.finish(source,"unreadable","","");}
+    }
     public static boolean enabled(){SharedPreferences p=prefs;return p!=null && p.getBoolean("enabled",true);}
     public static void setEnabled(boolean value){SharedPreferences p=prefs;if(p!=null)p.edit().putBoolean("enabled",value).apply();}
     public static boolean liveCheckEnabled(){SharedPreferences p=prefs;return p!=null && p.getBoolean("live_check",false);}
@@ -57,23 +74,26 @@ public final class AutoCache {
     public static void clearAll(){for(String ip:printers())clearPrinter(ip);}
     public static Object lookup(Object socket,Object request){
         try{
+            Diagnostics.abandon();
             String ip=address(socket),id=oid(request);if(ip==null||id==null)return null;
+            Diagnostics.begin(ip,id);
             Readiness.maybeCheck(ip);if(!enabled())return null;
             String saved=prefs.getString(key(ip,id),null);if(saved==null)return null;
             String[] parts=saved.split(":",2);ClassLoader loader=request.getClass().getClassLoader();
             Class<?> resultClass=loader.loadClass(SNMP+"SnmpResult");Object result=resultClass.getConstructor().newInstance();
             if(parts[0].equals("missing")){
-                Class<?> state=loader.loadClass(SNMP+"SnmpResult$SnmpState");resultClass.getField("state").set(result,state.getField("ErrorRequestNoSuchName").get(null));return result;
+                Class<?> state=loader.loadClass(SNMP+"SnmpResult$SnmpState");resultClass.getField("state").set(result,state.getField("ErrorRequestNoSuchName").get(null));diagnosticResult("cache",result);return result;
             }
             if(parts.length!=2)return null;Class<?> asn=loader.loadClass(WEST+"AsnObject"),vb=loader.loadClass(WEST+"Varbind");Object value;
             if(parts[0].equals("octets"))value=loader.loadClass(WEST+"AsnOctets").getConstructor(byte[].class).newInstance((Object)Base64.decode(parts[1],Base64.DEFAULT));
             else if(parts[0].equals("integer"))value=loader.loadClass(WEST+"AsnInteger").getConstructor(int.class).newInstance(Integer.parseInt(parts[1]));
             else return null;
-            Object bind=vb.getConstructor(String.class,asn).newInstance(id,value);Object array=Array.newInstance(vb,1);Array.set(array,0,bind);resultClass.getField("results").set(result,array);return result;
+            Object bind=vb.getConstructor(String.class,asn).newInstance(id,value);Object array=Array.newInstance(vb,1);Array.set(array,0,bind);resultClass.getField("results").set(result,array);diagnosticResult("cache",result);return result;
         }catch(Exception|LinkageError ignored){return null;}
     }
     public static void record(Object socket,Object request,Object result){
         try{
+            diagnosticResult("printer",result);
             if(!enabled()||result==null)return;String ip=address(socket),id=oid(request);if(ip==null||id==null)return;
             String state=String.valueOf(result.getClass().getField("state").get(result));String encoded;
             if(state.equals("ErrorRequestNoSuchName"))encoded="missing:";

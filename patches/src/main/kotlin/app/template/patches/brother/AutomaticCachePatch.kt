@@ -59,6 +59,10 @@ val automaticBrotherCache = patch(
                 setAttribute("android:name", ACTIVITY)
                 setAttribute("android:exported", "true")
             }
+            manifest.elements("application").first().appendChild("activity") {
+                setAttribute("android:name", "app.template.extension.extension.DiagnosticsActivity")
+                setAttribute("android:exported", "false")
+            }
         }
         resourceXml("res/xml/print_service.xml").use { xml ->
             xml.root.setAttribute("android:settingsActivity", "com.brother.printservice.settings.SettingsActivity")

@@ -6,6 +6,7 @@ import com.brother.sdk.common.socket.devicemanagement.snmp.SnmpRequest;
 import com.brother.sdk.common.socket.devicemanagement.snmp.SnmpResult;
 import com.brother.sdk.common.socket.devicemanagement.snmp.westhawk.*;
 import app.template.extension.extension.AutoCache;
+import app.template.extension.extension.Diagnostics;
 
 public class AutoCacheTest {
     static void check(boolean x,String label){if(!x)throw new AssertionError(label);}
@@ -34,6 +35,14 @@ public class AutoCacheTest {
         AutoCache.setEnabled(false);check(AutoCache.lookup(first,request)==null,"disabled cache must bypass");
         AutoCache.setEnabled(true);AutoCache.init(c);check(AutoCache.lookup(first,request)!=null,"persist across init");
         AutoCache.clearPrinter("192.0.2.1");check(AutoCache.lookup(first,request)==null,"clear printer");
+        Diagnostics.clear();Diagnostics.start();
+        check(AutoCache.lookup(first,request)==null,"diagnostic miss");
+        AutoCache.record(first,request,success(oid,new AsnOctets(new byte[]{65,66,67})));
+        check(AutoCache.lookup(first,request)!=null,"diagnostic hit");
+        String diag=Diagnostics.csv();check(Diagnostics.count()==2 && diag.contains("printer") && diag.contains("cache") && diag.contains("QUJD"),"live and cached responses recorded");
+        AutoCache.setEnabled(false);AutoCache.lookup(first,request);AutoCache.record(first,request,success(oid,new AsnInteger(42)));
+        check(Diagnostics.count()==3 && Diagnostics.csv().contains("42"),"record live response while cache disabled");
+        Diagnostics.stop();AutoCache.setEnabled(true);
         System.out.println("Automatic cache tests passed");
     }
 }
