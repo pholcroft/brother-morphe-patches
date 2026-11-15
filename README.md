@@ -17,6 +17,8 @@ The first preview may still be slow while responses are learned. The patched APK
 
 Open Android's printing settings, then Brother Print Service Plugin's settings. Under **Faster Print Previews Mod**, you can turn the cache on or off, enable an optional background readiness check, or choose **Manage saved printer data** to clear a printer or all saved printers. Turning the cache off leaves saved data intact and uses normal requests.
 
+On the saved-data page, open a printer's three-dot menu to refresh its status or clear its saved responses. Refresh is available when the background readiness check is enabled. **Clear all saved printers** is at the bottom of the page; clearing asks for confirmation.
+
 The settings controls require patch bundle **1.3.2 or later**. An earlier layout bug could prevent them appearing; refresh the Morphe source and repatch the original APK to update an older installation.
 
 The readiness check reports the printer's IPP state and whether it accepts jobs. It does not block preview, update Brother's own print status, or guarantee a successful print.
