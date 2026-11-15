@@ -43,3 +43,7 @@ assert 'Timing details and help' in settings
 assert "Reset timing comparison" not in settings
 assert "Uncached test result" in settings
 
+assert "What is this fix?" in settings
+assert "https://github.com/pholcroft/brother-morphe-patches#how-it-works-and-limitations" in settings
+assert "Intent.ACTION_VIEW" in settings
+

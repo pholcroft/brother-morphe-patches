@@ -23,7 +23,7 @@ Stable updates come from the `main` branch. To try future experimental builds, e
 
 Open Android's printing settings, then Brother Print Service Plugin's settings. Under **Faster Print Previews Mod**, you can turn the cache on or off, enable an optional background readiness check, or choose **Manage saved printer data** to clear a printer or all saved printers. Turning the cache off leaves saved data intact and uses normal requests.
 
-On the saved-data page, the printer's reported description is shown when available, alongside its address. Open the three-dot menu to see its recorded hardware address, refresh its status or clear its saved responses. Refresh is available when the background readiness check is enabled. **Clear all saved printers** is at the bottom of the page; clearing asks for confirmation.
+On the saved-data page, the printer's reported description is shown when available, alongside its address. Open the three-dot menu to learn how the fix works, see the recorded hardware address, refresh its status or clear its saved responses. Refresh is available when the background readiness check is enabled. **Clear all saved printers** is at the bottom of the page; clearing asks for confirmation.
 
 Clearing removes the saved responses and communication comparison times; it does not turn the cache off. With caching enabled, live replies may be learned and reused immediately, even during the next preview. To measure a fully uncached preview, switch caching off first. Diagnostic recordings are separate: use **Clear recording** in Diagnostics to remove previous events before a comparison.
 

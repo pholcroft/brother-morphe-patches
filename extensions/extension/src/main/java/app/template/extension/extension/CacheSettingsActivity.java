@@ -7,6 +7,8 @@ import android.app.Activity;
 import android.app.AlertDialog;
 
 import android.content.Intent;
+import android.content.ActivityNotFoundException;
+import android.net.Uri;
 
 import android.graphics.Color;
 
@@ -66,6 +68,7 @@ public final class CacheSettingsActivity extends Activity {
 
         PopupMenu menu=new PopupMenu(this,anchor);
 
+        menu.getMenu().add("What is this fix?");
         menu.getMenu().add("Printer details");
 
         menu.getMenu().add("Timing details and help");
@@ -79,6 +82,7 @@ public final class CacheSettingsActivity extends Activity {
 
         menu.setOnMenuItemClickListener(item->{
 
+            if(item.getTitle().equals("What is this fix?")){try{startActivity(new Intent(Intent.ACTION_VIEW,Uri.parse("https://github.com/pholcroft/brother-morphe-patches#how-it-works-and-limitations")));}catch(ActivityNotFoundException e){new AlertDialog.Builder(this).setTitle("Unable to open link").setMessage("No app is available to open the GitHub page.").setPositiveButton("OK",null).show();}return true;}
             if(item.getTitle().equals("Printer details")){String mac=AutoCache.readString("mac|"+ip,"");new AlertDialog.Builder(this).setTitle("Printer details").setMessage(AutoCache.printerName(ip)+"\nAddress: "+ip+"\nHardware address: "+(mac.isEmpty()?"Not recorded":mac)+(AutoCache.hasChangedAddress(ip)?"\nThis printer has been seen at another address.":"")+"\n\nThe mod checks the hardware address when the service requests it and can reuse saved responses if the printer moves to a new IP address. If the address cannot be checked, normal printer requests are used.").setPositiveButton("Close",null).show();return true;}
 
             if(item.getTitle().equals("Timing details and help")){new AlertDialog.Builder(this).setTitle("Timing details and help").setMessage(AutoCache.timingSummary(ip)+"\n\nLatest activity is the most recent burst of observed SNMP activity, not a preview time. A 3-second quiet period separates activity bursts; a single preview can contain more than one burst, and background requests may be included. Previous timings stay until you clear them.\n\nEstimated avoided adds previous live durations for matching cache hits. Estimated uncached adds that figure to the observed live request durations when all requests can be accounted for. Both are sums of request times, not elapsed preview time: requests can overlap, printer response times vary, and the estimate ignores cache overhead. Partial means some cache hits could not be estimated.\n\nUse Measure without cache in the printer menu for an optional live measurement.").setPositiveButton("Close",null).show();return true;}
