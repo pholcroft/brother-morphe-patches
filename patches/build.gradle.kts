@@ -4,7 +4,7 @@ patches {
     // TODO: Update this section with your project details.
     about {
         name = "Brother Fast Preview Patches"
-        description = "Experimental Brother HL-L8260CDW print preview patch"
+        description = "Aggressive experimental SNMP snapshot for Brother print preview"
         source = "https://github.com/pholcroft/brother-morphe-patches"
         author = "pholcroft"
         contact = "na"
