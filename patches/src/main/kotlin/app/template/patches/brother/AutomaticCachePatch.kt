@@ -22,7 +22,7 @@ private const val ACTIVITY = "app.template.extension.extension.CacheSettingsActi
 @Suppress("unused")
 val automaticBrotherCache = patch(
     name = "Faster print previews",
-    description = "Speed up repeat print previews by saving printer responses on your device. The first preview learns; later previews reuse them.",
+    description = "Speed up print previews by remembering your printer's details instead of asking for them every time. The first preview may be slower while the app learns; later previews will open much faster.",
     default = true
 ) {
     compatibleWith(Compatibility(name="Brother Print Service Plugin",packageName="com.brother.printservice",apkFileType=ApkFileType.APK,appIconColor=0x0033A0,targets=listOf(AppTarget(version="1.17.0"))))

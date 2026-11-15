@@ -1,6 +1,6 @@
 # Faster print previews for Brother printers
 
-**Make repeat print previews faster by remembering printer responses on your device.** The first preview learns; later previews can reuse what the printer already told it. No printer address or snapshot to enter.
+**Speed up print previews by remembering your printer's details instead of asking for them every time.** The first preview may be slower while the app learns; later previews will open much faster. No printer address or snapshot to enter.
 
 This is an unofficial, experimental Morphe patch for **Brother Print Service Plugin 1.17.0**. It has been tested on a Google Pixel 9 with a Brother HL-L8260CDW. Other Brother printers may benefit, but have not yet been verified.
 
