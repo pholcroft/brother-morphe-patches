@@ -34,9 +34,9 @@ public class TimingSummaryTest {
         CommunicationTiming.request(complete);CommunicationTiming.cacheHit(complete,"1.2.3",40);CommunicationTiming.finishAll();
         check(AutoCache.timingSummary(complete).contains("Estimated total request time without cache: 0.06 s"),"sum live and matched expected durations");
         String card=AutoCache.timingCardSummary(complete);
-        check(card.contains("First: ")&&card.contains("Estimated avoided: 0.04 s")&&card.contains("Estimated uncached: 0.06 s"),"card uses concise labels");
-        check(!card.contains("of 1 hits matched")&&!card.contains("Estimated total request time"),"card hides detailed explanations");
-        check(AutoCache.timingCardSummary(estimate).contains("partial"),"incomplete estimates are clearly labelled");
+        check(card.contains("First activity:")&&card.contains("Latest cached activity:"),"card labels activity bursts");
+        check(!card.contains("Estimated")&&!card.contains("requests")&&!card.contains("cached)"),"details are not repeated on the card");
+        check(card.split("\\n").length==2,"card shows only activity times until an uncached test exists");
         CommunicationTiming.startMeasurement(estimate);check(CommunicationTiming.isMeasuring(estimate),"measurement starts");
         CommunicationTiming.request(estimate);CommunicationTiming.response(estimate);CommunicationTiming.stopMeasurement(estimate);
         check(!CommunicationTiming.isMeasuring(estimate)&&AutoCache.timingSummary(estimate).contains("Uncached measurement"),"measurement stops and is retained");

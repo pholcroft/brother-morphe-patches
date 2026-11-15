@@ -34,3 +34,9 @@ with tempfile.TemporaryDirectory() as directory:
     java=pathlib.Path(os.environ['JAVA_HOME'])/'bin/java.exe'
     subprocess.run([str(javac),'-d',str(base/'classes'),str(source),*[str(p) for p in base.rglob('*.java')]],check=True)
     subprocess.run([str(java),'-cp',str(base/'classes'),'SettingsLayoutTest'],check=True)
+
+# Catch mojibake in navigation symbols and preserve the details entry.
+settings = (root / 'extensions/extension/src/main/java/app/template/extension/extension/CacheSettingsActivity.java').read_text(encoding='utf-8')
+assert 'â€' not in settings, 'navigation labels contain mojibake'
+assert 'Timing details and help' in settings
+
