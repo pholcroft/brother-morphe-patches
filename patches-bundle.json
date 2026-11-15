@@ -1,6 +1,6 @@
 {
-  "created_at": "2026-11-15T15:12:40",
-  "description": "Record and export optional printer diagnostics from the app.",
-  "download_url": "https://raw.githubusercontent.com/pholcroft/brother-morphe-patches/main/patches-1.4.0.mpp",
-  "version": "1.4.0"
+  "created_at": "2026-11-15T15:20:09",
+  "description": "Move mod controls below Brother settings and match the section style.",
+  "download_url": "https://raw.githubusercontent.com/pholcroft/brother-morphe-patches/main/patches-1.4.1.mpp",
+  "version": "1.4.1"
 }
