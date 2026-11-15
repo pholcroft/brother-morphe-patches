@@ -13,15 +13,11 @@ import java.io.File
 import java.net.URLClassLoader
 import java.util.jar.Manifest
 
-fun main() {
-    val patchFiles = setOf(
-        File("build/libs/").listFiles { file ->
-            val fileName = file.name
-            !fileName.contains("javadoc") &&
-                    !fileName.contains("sources") &&
-                    fileName.endsWith(".mpp")
-        }!!.first()
-    )
+fun main(args: Array<String>) {
+    require(args.size == 1) { "Expected the current patch bundle version" }
+    val currentBundle = File("build/libs/patches-${args.single()}.mpp")
+    require(currentBundle.isFile) { "Current patch bundle not found: $currentBundle" }
+    val patchFiles = setOf(currentBundle)
     val loadedPatches = loadPatchesFromJar(patchFiles)
     val patchClassLoader = URLClassLoader(patchFiles.map { it.toURI().toURL() }.toTypedArray())
     val manifest = patchClassLoader.getResources("META-INF/MANIFEST.MF")
