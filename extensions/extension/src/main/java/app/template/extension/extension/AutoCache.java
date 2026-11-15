@@ -119,8 +119,9 @@ public final class AutoCache {
     public static String readString(String key,String fallback){SharedPreferences p=prefs;return p==null?fallback:p.getString(key,fallback);}
     public static synchronized void saveTiming(String ip,long span,int live,int cached){
         SharedPreferences p=prefs;if(p==null||ip==null||live+cached==0)return;
-        String kind=cached==0?"baseline":"cached",key="timing|"+ip+"|"+kind;
-        if(cached==0&&p.getString(key,null)!=null)return;
+        String firstKey="timing|"+ip+"|baseline";
+        String key=p.getString(firstKey,null)==null?firstKey:(cached>0?"timing|"+ip+"|cached":null);
+        if(key==null)return;
         p.edit().putString(key,span+"|"+live+"|"+cached+"|"+System.currentTimeMillis()).apply();
     }
     public static String timingValue(String ip,String kind){SharedPreferences p=prefs;if(p==null)return "";String v=p.getString("timing|"+ip+"|"+kind,"");String[] a=v.split("\\|");return a.length==4?a[0]:"";}
@@ -129,7 +130,7 @@ public final class AutoCache {
         if(value==null||value.isEmpty())return label+": Not recorded";
         try{String[] a=value.split("\\|");long ms=Long.parseLong(a[0]);int live=Integer.parseInt(a[1]),cached=Integer.parseInt(a[2]);return String.format(java.util.Locale.ROOT,"%s: %.2f s · %d requests (%d cached)",label,ms/1000.0,live+cached,cached);}catch(Exception ignored){return label+": Not recorded";}
     }
-    public static String timingSummary(String ip){SharedPreferences p=prefs;if(p==null)return "Without cache: Not recorded\nWith cache: Not recorded";return timingLine("Without cache",p.getString("timing|"+ip+"|baseline",""))+"\n"+timingLine("With cache",p.getString("timing|"+ip+"|cached",""));}
+    public static String timingSummary(String ip){SharedPreferences p=prefs;if(p==null)return "First activity: Not recorded\nLater cached activity: Not recorded";return timingLine("First activity",p.getString("timing|"+ip+"|baseline",""))+"\n"+timingLine("Later cached activity",p.getString("timing|"+ip+"|cached",""));}
     public static synchronized void clearTimings(String ip){SharedPreferences p=prefs;if(p==null||ip==null)return;String mac=p.getString("mac|"+ip,null);SharedPreferences.Editor e=p.edit().remove("timing|"+ip+"|baseline").remove("timing|"+ip+"|cached");if(mac!=null){e.remove("timing-identity|"+mac+"|baseline").remove("timing-identity|"+mac+"|cached");}e.apply();CommunicationTiming.discard(ip);}
     public static String printerName(String ip){
         SharedPreferences p=prefs;if(p==null||ip==null)return "Saved printer";
@@ -208,3 +209,4 @@ public final class AutoCache {
     }
     private AutoCache(){}
 }
+

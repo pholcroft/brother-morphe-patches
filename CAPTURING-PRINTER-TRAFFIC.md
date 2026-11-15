@@ -12,7 +12,7 @@ The recorder shows supported individual SNMP GETs handled by the patch, their re
 
 Clearing saved printer data does not clear the diagnostic recording, and freshly received replies can be cached immediately if caching is enabled. For an uncached comparison, clear the diagnostic recording, switch the cache off in the main settings, then record a fresh preview.
 
-The saved-data screen and CSV also include automatic communication-span comparisons when available. The first observed burst with no cache hits is the baseline; the latest burst with cache hits is the cached comparison. A burst ends after three seconds without an observed individual GET, and the displayed duration excludes that quiet period. Request counts may differ and not all printer traffic is observed, so the numbers are not guaranteed to represent identical work or the time until the preview appears. Reset a printer's timing comparison from its card menu without clearing its saved responses. To capture a new baseline, reset the times, turn off the cache, open a preview, then turn it back on and repeat.
+The saved-data screen and CSV also include automatic communication-span comparisons when available. The first observed activity burst is saved, even if it includes cache hits while responses are learned; a later burst with cache hits is saved separately. A burst ends after three seconds without an observed individual GET, and its duration excludes that quiet period. Background activity may be recorded, request counts may differ and not all printer traffic is observed, so these are not guaranteed to represent identical work or the time until the preview appears. Reset a printer's timing comparison from its card menu without clearing saved responses. To measure a fully uncached first burst, reset the times, turn off the cache, open a preview, then turn it back on and repeat.
 
 ## What you'll need
 
@@ -66,3 +66,4 @@ Please include:
 - Any optional screenshots or screen recording, after reviewing them for personal information.
 
 If you prefer not to share a capture publicly, a description of the model, features and observed behaviour is still useful. Please don't post sensitive data while waiting for a response.
+

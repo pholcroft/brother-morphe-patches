@@ -27,7 +27,7 @@ On the saved-data page, the printer's reported description is shown when availab
 
 Clearing removes the saved responses and communication comparison times; it does not turn the cache off. With caching enabled, live replies may be learned and reused immediately, even during the next preview. To measure a fully uncached preview, switch caching off first. Diagnostic recordings are separate: use **Clear recording** in Diagnostics to remove previous events before a comparison.
 
-Each printer card also shows the first observed **without cache** and most recent **with cache** communication spans. These are approximate durations of individual SNMP GET activity observed by the mod, separated into bursts by three seconds without such activity. They are not tap-to-preview measurements; background polling, missing operations and different request counts can make comparisons misleading. Timings are collected automatically without diagnostic recording. If the baseline is missing, disable the cache and open a preview, then re-enable it and open another. Use the card menu to reset the timing comparison without clearing cached responses. Previously recorded captures cannot be retroactively timed by the app.
+Each printer card shows the first observed communication burst and the latest later burst with cache hits, including request and cache-hit counts. The first burst may include cache hits as responses are learned. These are approximate durations of individual SNMP GET activity observed by the mod, separated by three seconds without such activity; they are not tap-to-preview measurements. Background polling, missing operations and differing request counts can make comparisons misleading. Timings are collected automatically without diagnostic recording. To measure an entirely uncached first burst, reset the timing comparison, turn the cache off and open a preview, then turn it on and open another. Clearing saved printer data also resets the timings. Previously recorded captures cannot be retroactively timed by the app.
 
 The settings controls require patch bundle **1.3.2 or later**. An earlier layout bug could prevent them appearing; refresh the Morphe source and repatch the original APK to update an older installation.
 
@@ -39,7 +39,7 @@ Under **Manage saved printer data → Advanced: record printer requests**, you c
 
 CSV exports may contain printer IP addresses, identifiers and response data. Review them before sharing. The recorder does not capture discovery, other protocols, every failure or print-job data; hook times are not tap-to-preview timings. For full network investigation, use the [PCAPdroid guide](CAPTURING-PRINTER-TRAFFIC.md).
 
-The CSV includes the latest stored baseline and cache-used communication spans and request counts for each printer. These columns can be empty until the app has observed the relevant bursts.
+The CSV includes the first observed and latest later cache-used communication spans and request counts for each printer. These columns can be empty until the app has observed the relevant bursts.
 
 Export filenames include the local date and time. **How to share diagnostics** explains what to review and offers separate buttons for the guide and GitHub issues; it never submits a report automatically.
 
@@ -64,3 +64,4 @@ When publishing a new bundle, also run `./gradlew :patches:buildAndroid :patches
 See [RELEASING.md](RELEASING.md) for the pre-release and stable publishing procedure.
 
 Licensed under GPL-3.0; see LICENSE and NOTICE.
+
