@@ -6,9 +6,13 @@ You can contribute a capture from the original service, the patched service, or 
 
 ## Alternative: record diagnostics in the patched app
 
-Patch bundle **1.4.0 or later** has a lightweight recorder built in. Open Android printing settings → Brother Print Service Plugin → **Manage saved printer data → Advanced: record printer requests**. Start recording, open a print preview, then return to stop recording. Refresh the list to inspect recent events, and use **Export CSV** to choose where to save the recording. The issue button opens GitHub; it doesn't upload anything for you.
+Patch bundle **1.4.0 or later** has a lightweight recorder built in. Open Android printing settings → Brother Print Service Plugin → **Manage saved printer data → Diagnostics**. Start recording, open a print preview, then return to stop recording. Refresh the list to inspect recent events, and use **Export CSV** to choose where to save the recording. The sharing help explains the next steps; it doesn't upload anything for you.
 
 The recorder shows supported individual SNMP GETs handled by the patch, their results and response values, source (cache or printer), and elapsed hook time. It does not cover discovery broadcasts, other protocols, all failures, print jobs or the original unpatched app. Data is kept in memory until the app process exits, with a 2,000-event limit. A CSV can include printer IP addresses, identifiers and responses; Base64 byte strings are not encrypted. Review it before sharing. For traffic outside the recorder's coverage, follow the PCAPdroid steps below.
+
+Clearing saved printer data does not clear the diagnostic recording, and freshly received replies can be cached immediately if caching is enabled. For an uncached comparison, clear the diagnostic recording, switch the cache off in the main settings, then record a fresh preview.
+
+The saved-data screen shows the latest observed activity burst, an estimate of uncached request time, and estimated request time avoided. The CSV includes the same measurement components. A burst ends after three seconds without an observed individual GET. Background activity may be recorded, and one preview can contain multiple bursts. The estimates add request durations and do not represent elapsed preview time; requests may overlap, response times vary, and cache overhead is ignored. Reset the timing from the printer card menu without clearing saved responses.
 
 ## What you'll need
 
@@ -62,3 +66,6 @@ Please include:
 - Any optional screenshots or screen recording, after reviewing them for personal information.
 
 If you prefer not to share a capture publicly, a description of the model, features and observed behaviour is still useful. Please don't post sensitive data while waiting for a response.
+
+To collect an uncached comparison without changing the main cache switch, open the saved printer card menu and select **Measure without cache**. Open the preview and wait for its options, then return to the same menu and select **Stop uncached measurement**. Requests for that printer use live responses during this interval; other background requests can be included. The saved-data screen also estimates request time avoided using earlier matching live requests. This sum is not preview time and ignores cache overhead and overlapping requests.
+
