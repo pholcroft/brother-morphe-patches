@@ -15,6 +15,10 @@ This is an unofficial, experimental Morphe patch for **Brother Print Service Plu
 
 The first preview may still be slow while responses are learned. The patched APK may have a different signing key from your existing installation; replacing that installation may require uninstalling it, which can delete its settings and data. Keep a way to restore the original app.
 
+### Try pre-release updates
+
+Stable updates come from the `main` branch. To try future experimental builds, enable **Pre-release patches** on this source's card in Morphe. New changes are tested on `dev` before an approved stable release. If you originally added a raw URL containing `refs/heads/main`, add the repository URL above as the source instead so Morphe can switch channels. There may not always be a newer pre-release available.
+
 ## Settings
 
 Open Android's printing settings, then Brother Print Service Plugin's settings. Under **Faster Print Previews Mod**, you can turn the cache on or off, enable an optional background readiness check, or choose **Manage saved printer data** to clear a printer or all saved printers. Turning the cache off leaves saved data intact and uses normal requests.
@@ -49,5 +53,6 @@ Build with `./gradlew buildAndroid`, Java 17+, Android SDK 36 and access to Morp
 
 When publishing a new bundle, also run `./gradlew :patches:buildAndroid :patches:generatePatchesList` and publish the generated root `patches-list.json` alongside the matching bundle and metadata. The Morphe community index uses this file to discover the supported app and patch.
 
-Licensed under GPL-3.0; see LICENSE and NOTICE.
+See [RELEASING.md](RELEASING.md) for the pre-release and stable publishing procedure.
 
+Licensed under GPL-3.0; see LICENSE and NOTICE.
