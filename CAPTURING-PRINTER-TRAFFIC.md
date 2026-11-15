@@ -6,7 +6,7 @@ You can contribute a capture from the original service, the patched service, or 
 
 ## Alternative: record diagnostics in the patched app
 
-Patch bundle **1.4.0 or later** has a lightweight recorder built in. Open Android printing settings → Brother Print Service Plugin → **Manage saved printer data → Advanced: record printer requests**. Start recording, open a print preview, then return to stop recording. Refresh the list to inspect recent events, and use **Export CSV** to choose where to save the recording. The issue button opens GitHub; it doesn't upload anything for you.
+Patch bundle **1.4.0 or later** has a lightweight recorder built in. Open Android printing settings → Brother Print Service Plugin → **Manage saved printer data → Diagnostics**. Start recording, open a print preview, then return to stop recording. Refresh the list to inspect recent events, and use **Export CSV** to choose where to save the recording. The sharing help explains the next steps; it doesn't upload anything for you.
 
 The recorder shows supported individual SNMP GETs handled by the patch, their results and response values, source (cache or printer), and elapsed hook time. It does not cover discovery broadcasts, other protocols, all failures, print jobs or the original unpatched app. Data is kept in memory until the app process exits, with a 2,000-event limit. A CSV can include printer IP addresses, identifiers and responses; Base64 byte strings are not encrypted. Review it before sharing. For traffic outside the recorder's coverage, follow the PCAPdroid steps below.
 

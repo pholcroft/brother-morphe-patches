@@ -43,6 +43,10 @@ public class AutoCacheTest {
         AutoCache.setEnabled(false);AutoCache.lookup(first,request);AutoCache.record(first,request,success(oid,new AsnInteger(42)));
         check(Diagnostics.count()==3 && Diagnostics.csv().contains("42"),"record live response while cache disabled");
         Diagnostics.stop();AutoCache.setEnabled(true);
+        check(AutoCache.printerName("192.0.2.2").equals("Saved printer"),"missing description fallback");
+        String descriptionOid="1.3.6.1.2.1.25.3.2.1.3.1";
+        AutoCache.record(second,new SnmpRequest(descriptionOid,-96),success(descriptionOid,new AsnOctets("Brother Example Printer".getBytes(java.nio.charset.StandardCharsets.UTF_8))));
+        check(AutoCache.printerName("192.0.2.2").equals("Brother Example Printer"),"use captured printer description");
         System.out.println("Automatic cache tests passed");
     }
 }

@@ -61,6 +61,16 @@ public final class AutoCache {
     public static boolean liveCheckEnabled(){SharedPreferences p=prefs;return p!=null && p.getBoolean("live_check",false);}
     public static void setLiveCheckEnabled(boolean value){SharedPreferences p=prefs;if(p!=null)p.edit().putBoolean("live_check",value).apply();}
     public static String readString(String key,String fallback){SharedPreferences p=prefs;return p==null?fallback:p.getString(key,fallback);}
+    public static String printerName(String ip){
+        SharedPreferences p=prefs;if(p==null||ip==null)return "Saved printer";
+        for(String id:new String[]{"1.3.6.1.2.1.25.3.2.1.3.1","1.3.6.1.2.1.1.1.0"}){
+            try{String saved=p.getString(key(ip,id),null);if(saved==null||!saved.startsWith("octets:"))continue;
+                String name=new String(Base64.decode(saved.substring(7),Base64.DEFAULT),StandardCharsets.UTF_8).replaceAll("[\\p{Cntrl}\\s]+"," ").trim();
+                if(!name.isEmpty())return name.length()>80?name.substring(0,77)+"…":name;
+            }catch(Exception ignored){}
+        }
+        return "Saved printer";
+    }
     public static void writeString(String key,String value){SharedPreferences p=prefs;if(p!=null)p.edit().putString(key,value).apply();}
     public static Set<String> printers(){
         Set<String> result=new HashSet<>();SharedPreferences p=prefs;if(p==null)return result;
