@@ -18,8 +18,9 @@ private const val RESULT = "Lcom/brother/sdk/common/socket/devicemanagement/snmp
 private const val EXTENSION = "Lapp/template/extension/extension/FixedResponses;"
 
 private fun validSnapshot(input: String?): Boolean = try {
-    require(input != null && input.length in 1..12000 && input.matches(Regex("[A-Za-z0-9+/]+={0,2}")))
-    val bytes = GZIPInputStream(ByteArrayInputStream(Base64.getDecoder().decode(input))).use { stream ->
+    val clean = input?.filterNot(Char::isWhitespace)
+    require(clean != null && clean.length in 1..12000 && clean.matches(Regex("[A-Za-z0-9+/]+={0,2}")))
+    val bytes = GZIPInputStream(ByteArrayInputStream(Base64.getDecoder().decode(clean))).use { stream ->
         val output = ByteArrayOutputStream()
         val buffer = ByteArray(2048)
         while (true) {
@@ -76,7 +77,7 @@ val fastBrotherPreview = patch(
     extendWith("extensions/extension.mpe")
     execute {
         val target = requireNotNull(printerAddress.value)
-        val snapshot = requireNotNull(snapshotData.value)
+        val snapshot = requireNotNull(snapshotData.value).filterNot(Char::isWhitespace)
         Fingerprint(
             definingClass = CLIENT,
             name = "requestGet",

@@ -1,6 +1,6 @@
 {
-  "created_at": "2026-11-15T01:00:00",
-  "description": "Experimental aggressive snapshot-based Brother preview acceleration; may break printing.",
-  "download_url": "https://raw.githubusercontent.com/pholcroft/brother-morphe-patches/main/patches-1.1.0.mpp",
-  "version": "1.1.0"
+  "created_at": "2026-11-15T02:00:00",
+  "description": "Accept whitespace when pasting private snapshots.",
+  "download_url": "https://raw.githubusercontent.com/pholcroft/brother-morphe-patches/main/patches-1.1.1.mpp",
+  "version": "1.1.1"
 }
