@@ -36,7 +36,7 @@ public final class CacheSettingsActivity extends Activity {
         menu.getMenu().add("Refresh status").setEnabled(AutoCache.liveCheckEnabled());
         menu.getMenu().add("Clear saved data");
         menu.setOnMenuItemClickListener(item->{
-            if(item.getTitle().equals("Printer details")){String mac=AutoCache.readString("mac|"+ip,"");new AlertDialog.Builder(this).setTitle("Printer details").setMessage(AutoCache.printerName(ip)+"\nAddress: "+ip+"\nHardware address: "+(mac.isEmpty()?"Not recorded":mac)+"\n\nSaved responses are keyed by IP address. The hardware address is not currently checked before reuse. A changed IP address is learned separately.").setPositiveButton("Close",null).show();return true;}
+            if(item.getTitle().equals("Printer details")){String mac=AutoCache.readString("mac|"+ip,"");new AlertDialog.Builder(this).setTitle("Printer details").setMessage(AutoCache.printerName(ip)+"\nAddress: "+ip+"\nHardware address: "+(mac.isEmpty()?"Not recorded":mac)+(AutoCache.hasChangedAddress(ip)?"\nThis printer has been seen at another address.":"")+"\n\nThe mod checks the hardware address when the service requests it and can reuse saved responses if the printer moves to a new IP address. If the address cannot be checked, normal printer requests are used.").setPositiveButton("Close",null).show();return true;}
             if(item.getTitle().equals("Refresh status")){Readiness.refresh(ip);new Handler(Looper.getMainLooper()).postDelayed(()->{if(!isFinishing())render();},4500);return true;}
             if(item.getTitle().equals("Clear saved data")){clearPrinter(ip);return true;}
             return false;
@@ -47,7 +47,7 @@ public final class CacheSettingsActivity extends Activity {
         LinearLayout card=new LinearLayout(this);card.setOrientation(LinearLayout.HORIZONTAL);card.setGravity(Gravity.CENTER_VERTICAL);card.setPadding(dp(16),dp(14),dp(8),dp(14));card.setBackground(rounded(Color.WHITE,0xffd1d5d8,10));
         LinearLayout details=new LinearLayout(this);details.setOrientation(LinearLayout.VERTICAL);
         TextView name=text(AutoCache.printerName(ip),17,TEXT);name.setTypeface(null,Typeface.BOLD);details.addView(name);
-        TextView address=text(ip,14,MUTED);address.setPadding(0,dp(5),0,0);details.addView(address);
+        TextView address=text(ip+(AutoCache.hasChangedAddress(ip)?" · Address changed":""),14,MUTED);address.setPadding(0,dp(5),0,0);details.addView(address);
         card.addView(details,new LinearLayout.LayoutParams(0,ViewGroup.LayoutParams.WRAP_CONTENT,1));
         String status=AutoCache.liveCheckEnabled()?AutoCache.readString("status|"+ip,"Not checked yet"):"Check off";
         boolean ready=status.startsWith("Ready ·") || status.equals("Ready");

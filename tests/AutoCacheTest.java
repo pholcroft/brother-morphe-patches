@@ -15,6 +15,9 @@ public class AutoCacheTest {
         Context c=new Context();AutoCache.init(c);
         BrDatagramSocket first=new BrDatagramSocket(InetAddress.getByName("192.0.2.1"));
         BrDatagramSocket second=new BrDatagramSocket(InetAddress.getByName("192.0.2.2"));
+        String mac="1.3.6.1.2.1.2.2.1.6.1";
+        AutoCache.record(first,new SnmpRequest(mac,-96),success(mac,new AsnOctets(new byte[]{2,1,2,3,4,1})));
+        AutoCache.record(second,new SnmpRequest(mac,-96),success(mac,new AsnOctets(new byte[]{2,1,2,3,4,2})));
         String oid="1.3.6.1.2.1.43.1.1.1",no="1.3.6.1.2.1.43.1.1.2",num="1.3.6.1.2.1.43.1.1.3";
         SnmpRequest request=new SnmpRequest(oid,-96);
         check(AutoCache.lookup(first,request)==null,"first request must be live");
@@ -33,8 +36,9 @@ public class AutoCacheTest {
         check(AutoCache.lookup(first,new SnmpRequest(oid,-95))==null,"GETNEXT must stay live");
         check(AutoCache.lookup(first,new SnmpRequest(oid,-96,2))==null,"multi request must stay live");
         AutoCache.setEnabled(false);check(AutoCache.lookup(first,request)==null,"disabled cache must bypass");
-        AutoCache.setEnabled(true);AutoCache.init(c);check(AutoCache.lookup(first,request)!=null,"persist across init");
+        AutoCache.setEnabled(true);AutoCache.init(c);check(AutoCache.lookup(first,request)==null,"re-enable must verify identity");AutoCache.record(first,new SnmpRequest(mac,-96),success(mac,new AsnOctets(new byte[]{2,1,2,3,4,1})));check(AutoCache.lookup(first,request)!=null,"persist across init after identity check");
         AutoCache.clearPrinter("192.0.2.1");check(AutoCache.lookup(first,request)==null,"clear printer");
+        AutoCache.record(first,new SnmpRequest(mac,-96),success(mac,new AsnOctets(new byte[]{2,1,2,3,4,1})));
         Diagnostics.clear();Diagnostics.start();
         check(AutoCache.lookup(first,request)==null,"diagnostic miss");
         AutoCache.record(first,request,success(oid,new AsnOctets(new byte[]{65,66,67})));
@@ -44,6 +48,7 @@ public class AutoCacheTest {
         check(Diagnostics.count()==3 && Diagnostics.csv().contains("42"),"record live response while cache disabled");
         Diagnostics.stop();AutoCache.setEnabled(true);
         check(AutoCache.printerName("192.0.2.2").equals("Saved printer"),"missing description fallback");
+        AutoCache.record(second,new SnmpRequest(mac,-96),success(mac,new AsnOctets(new byte[]{2,1,2,3,4,2})));
         String descriptionOid="1.3.6.1.2.1.25.3.2.1.3.1";
         AutoCache.record(second,new SnmpRequest(descriptionOid,-96),success(descriptionOid,new AsnOctets("Brother Example Printer".getBytes(java.nio.charset.StandardCharsets.UTF_8))));
         check(AutoCache.printerName("192.0.2.2").equals("Brother Example Printer"),"use captured printer description");

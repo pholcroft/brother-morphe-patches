@@ -41,7 +41,7 @@ Export filenames include the local date and time. **How to share diagnostics** e
 
 The patch saves supported individual SNMP GET responses per printer address in the app's private storage and reuses them. Timeouts, unsupported response types, multi-object requests, discovery broadcasts and other traffic follow the original path. The cache can contain stale status or capability information, so the service may show incorrect paper, toner or availability information. Clear a printer's saved data to relearn it.
 
-The cache uses the printer's IP address; a MAC address may be recorded but is not checked on reuse. A changed IP is learned as a new printer. If an address is reassigned to another printer, clear the old saved data first. There is no automatic expiry.
+The cache checks a valid printer hardware (MAC) address through the service's normal SNMP requests and can carry saved responses to a new IP when the same hardware is seen there. The printer card marks an observed address change; this does not prove whether DHCP assigned it. Until an address is verified, requests go to the printer. Printers that do not provide a usable MAC through this request will use normal requests and may not benefit from caching. The identity verification is held briefly in memory and checked again when the service requests the hardware address; it is not a continuously monitored guarantee that an IP was never reassigned between checks. Cached response values have no automatic expiry.
 
 Read the [technical analysis and packet timelines](TECHNICAL-ANALYSIS.md) for the measurements, proposed improvements and evidence limits. The public source contains no APK, packet capture, private snapshot or private printer address.
 
