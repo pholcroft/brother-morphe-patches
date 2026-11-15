@@ -12,7 +12,7 @@ The recorder shows supported individual SNMP GETs handled by the patch, their re
 
 Clearing saved printer data does not clear the diagnostic recording, and freshly received replies can be cached immediately if caching is enabled. For an uncached comparison, clear the diagnostic recording, switch the cache off in the main settings, then record a fresh preview.
 
-The saved-data screen and CSV also include automatic communication-span comparisons when available. The first observed activity burst is saved, even if it includes cache hits while responses are learned; a later burst with cache hits is saved separately. A burst ends after three seconds without an observed individual GET, and its duration excludes that quiet period. Background activity may be recorded, request counts may differ and not all printer traffic is observed, so these are not guaranteed to represent identical work or the time until the preview appears. Reset a printer's timing comparison from its card menu without clearing saved responses. To measure a fully uncached first burst, reset the times, turn off the cache, open a preview, then turn it back on and repeat.
+The saved-data screen shows the latest observed activity burst, an estimate of uncached request time, and estimated request time avoided. The CSV includes the same measurement components. A burst ends after three seconds without an observed individual GET. Background activity may be recorded, and one preview can contain multiple bursts. The estimates add request durations and do not represent elapsed preview time; requests may overlap, response times vary, and cache overhead is ignored. Reset the timing from the printer card menu without clearing saved responses.
 
 ## What you'll need
 
