@@ -1,7 +1,7 @@
 {
-  "created_at": "2026-11-15T20:14:45",
-  "description": "Record the first printer activity even when responses are cached while learning.",
-  "download_url": "https://raw.githubusercontent.com/pholcroft/brother-morphe-patches/dev/patches-1.5.1-dev.5.mpp",
-  "version": "1.5.1-dev.5"
+  "created_at": "2026-11-15T20:41:49",
+  "description": "Estimate request time avoided and optionally measure without cache.",
+  "download_url": "https://raw.githubusercontent.com/pholcroft/brother-morphe-patches/dev/patches-1.5.1-dev.6.mpp",
+  "version": "1.5.1-dev.6"
 }
 

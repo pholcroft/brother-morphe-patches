@@ -25,6 +25,17 @@ public class TimingSummaryTest {
         CommunicationTiming.request(mixed);CommunicationTiming.cacheHit(mixed);CommunicationTiming.finishAll();
         check(AutoCache.timingRequestCount(mixed,"cached").equals("1"),"later cache burst recorded separately");
         check(AutoCache.timingRequestCount(mixed,"baseline").equals("2"),"first measurement stays unchanged");
+        String estimate="192.0.2.13";
+        CommunicationTiming.request(estimate);CommunicationTiming.liveSample(estimate,20);CommunicationTiming.response(estimate);CommunicationTiming.request(estimate);CommunicationTiming.cacheHit(estimate,"1.2.3",40);CommunicationTiming.request(estimate);CommunicationTiming.cacheHit(estimate,"1.2.4",-1);CommunicationTiming.finishAll();
+        check(AutoCache.timingSummary(estimate).contains("0.04 s")&&AutoCache.timingSummary(estimate).contains("1 of 2"),"show estimate and matched coverage only");
+        check(!AutoCache.timingSummary(estimate).contains("Estimated total request time"),"do not invent total for unmatched hits");
+        String complete="192.0.2.14";
+        CommunicationTiming.request(complete);CommunicationTiming.liveSample(complete,20);CommunicationTiming.response(complete);
+        CommunicationTiming.request(complete);CommunicationTiming.cacheHit(complete,"1.2.3",40);CommunicationTiming.finishAll();
+        check(AutoCache.timingSummary(complete).contains("Estimated total request time without cache: 0.06 s"),"sum live and matched expected durations");
+        CommunicationTiming.startMeasurement(estimate);check(CommunicationTiming.isMeasuring(estimate),"measurement starts");
+        CommunicationTiming.request(estimate);CommunicationTiming.response(estimate);CommunicationTiming.stopMeasurement(estimate);
+        check(!CommunicationTiming.isMeasuring(estimate)&&AutoCache.timingSummary(estimate).contains("Uncached measurement"),"measurement stops and is retained");
         String auto="192.0.2.11";CommunicationTiming.request(auto);CommunicationTiming.response(auto);Thread.sleep(3400);check(!AutoCache.timingValue(auto,"baseline").isEmpty(),"timing saves automatically after quiet period");
         AutoCache.clearAll();check(AutoCache.timingSummary(ip).contains("Not recorded"),"clearing removes timing summaries");
         System.out.println("Communication timing summary checks passed");

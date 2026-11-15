@@ -67,3 +67,5 @@ Please include:
 
 If you prefer not to share a capture publicly, a description of the model, features and observed behaviour is still useful. Please don't post sensitive data while waiting for a response.
 
+To collect an uncached comparison without changing the main cache switch, open the saved printer card menu and select **Measure without cache**. Open the preview and wait for its options, then return to the same menu and select **Stop uncached measurement**. Requests for that printer use live responses during this interval; other background requests can be included. The saved-data screen also estimates request time avoided using earlier matching live requests. This sum is not preview time and ignores cache overhead and overlapping requests.
+

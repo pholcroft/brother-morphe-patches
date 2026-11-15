@@ -25,6 +25,7 @@ public final class AutoCache {
     private static final long VERIFY_TTL_MS=30000;
     private static long cacheEpoch;
     private static final ThreadLocal<Long> REQUEST_EPOCH=new ThreadLocal<>();
+    private static final ThreadLocal<Long> REQUEST_START=new ThreadLocal<>();
 
     public static void init(Context context) {
         if(context!=null) prefs=context.getApplicationContext().getSharedPreferences("morphe_printer_cache_v1",Context.MODE_PRIVATE);
@@ -117,12 +118,13 @@ public final class AutoCache {
     public static boolean liveCheckEnabled(){SharedPreferences p=prefs;return p!=null && p.getBoolean("live_check",false);}
     public static void setLiveCheckEnabled(boolean value){SharedPreferences p=prefs;if(p!=null)p.edit().putBoolean("live_check",value).apply();}
     public static String readString(String key,String fallback){SharedPreferences p=prefs;return p==null?fallback:p.getString(key,fallback);}
-    public static synchronized void saveTiming(String ip,long span,int live,int cached){
+    public static synchronized void saveTiming(String ip,long span,int live,int cached){saveTiming(ip,span,live,cached,0,0,0,0);}
+    public static synchronized void saveTiming(String ip,long span,int live,int cached,long estimate,int matched,long liveTime,int liveMeasured){
         SharedPreferences p=prefs;if(p==null||ip==null||live+cached==0)return;
         String firstKey="timing|"+ip+"|baseline";
         String key=p.getString(firstKey,null)==null?firstKey:(cached>0?"timing|"+ip+"|cached":null);
         if(key==null)return;
-        p.edit().putString(key,span+"|"+live+"|"+cached+"|"+System.currentTimeMillis()).apply();
+        p.edit().putString(key,span+"|"+live+"|"+cached+"|"+System.currentTimeMillis()).putString(key+"|estimate",estimate+"|"+matched+"|"+cached+"|"+liveTime+"|"+liveMeasured+"|"+live).apply();
     }
     public static String timingValue(String ip,String kind){SharedPreferences p=prefs;if(p==null)return "";String v=p.getString("timing|"+ip+"|"+kind,"");String[] a=v.split("\\|");return a.length==4?a[0]:"";}
     public static String timingRequestCount(String ip,String kind){SharedPreferences p=prefs;if(p==null)return "";try{String[] a=p.getString("timing|"+ip+"|"+kind,"").split("\\|");return Integer.toString(Integer.parseInt(a[1])+Integer.parseInt(a[2]));}catch(Exception ignored){return "";}}
@@ -130,8 +132,15 @@ public final class AutoCache {
         if(value==null||value.isEmpty())return label+": Not recorded";
         try{String[] a=value.split("\\|");long ms=Long.parseLong(a[0]);int live=Integer.parseInt(a[1]),cached=Integer.parseInt(a[2]);return String.format(java.util.Locale.ROOT,"%s: %.2f s · %d requests (%d cached)",label,ms/1000.0,live+cached,cached);}catch(Exception ignored){return label+": Not recorded";}
     }
-    public static String timingSummary(String ip){SharedPreferences p=prefs;if(p==null)return "First activity: Not recorded\nLater cached activity: Not recorded";return timingLine("First activity",p.getString("timing|"+ip+"|baseline",""))+"\n"+timingLine("Later cached activity",p.getString("timing|"+ip+"|cached",""));}
-    public static synchronized void clearTimings(String ip){SharedPreferences p=prefs;if(p==null||ip==null)return;String mac=p.getString("mac|"+ip,null);SharedPreferences.Editor e=p.edit().remove("timing|"+ip+"|baseline").remove("timing|"+ip+"|cached");if(mac!=null){e.remove("timing-identity|"+mac+"|baseline").remove("timing-identity|"+mac+"|cached");}e.apply();CommunicationTiming.discard(ip);}
+    public static String timingEstimateField(String ip,String kind,int index){SharedPreferences p=prefs;if(p==null)return "";try{String[] a=p.getString("timing|"+ip+"|"+kind+"|estimate","").split("\\|");return a.length==6?a[index]:"";}catch(Exception ignored){return "";}}
+    private static String estimateLine(SharedPreferences p,String key){
+        try{String[] a=p.getString(key+"|estimate","").split("\\|");long ms=Long.parseLong(a[0]);int matched=Integer.parseInt(a[1]),total=Integer.parseInt(a[2]);if(total==0)return "";if(matched==0)return "\nEstimated request time avoided: Not available (0 of "+total+" hits matched)";String out=String.format(java.util.Locale.ROOT,"\nEstimated request time avoided: %.2f s (%d of %d hits matched)",ms/1000.0,matched,total);if(a.length>=6){long liveTime=Long.parseLong(a[3]);int liveMeasured=Integer.parseInt(a[4]),live=Integer.parseInt(a[5]);if(matched==total&&liveMeasured==live)out+=String.format(java.util.Locale.ROOT,"\nEstimated total request time without cache: %.2f s",(liveTime+ms)/1000.0);}return out;}catch(Exception ignored){return "";}
+    }
+    public static synchronized void saveMeasurement(String ip,long span,int count){SharedPreferences p=prefs;if(p!=null)p.edit().putString("timing|"+ip+"|measurement",span+"|"+count+"|0|"+System.currentTimeMillis()).apply();}
+    public static String timingSummary(String ip){SharedPreferences p=prefs;if(p==null)return "First activity: Not recorded\nLater cached activity: Not recorded";String first="timing|"+ip+"|baseline",later="timing|"+ip+"|cached",measure="timing|"+ip+"|measurement";String out=timingLine("First activity",p.getString(first,""))+estimateLine(p,first)+"\n"+timingLine("Later cached activity",p.getString(later,""))+estimateLine(p,later);String m=p.getString(measure,"");if(!m.isEmpty())out+="\n"+timingLine("Uncached measurement",m);return out;}
+    private static long sample(String ip,String id){try{String[] a=prefs.getString("timing|"+ip+"|sample|"+id,"").split("\\|");return Long.parseLong(a[0])/Long.parseLong(a[1]);}catch(Exception ignored){return -1;}}
+    private static void saveSample(String ip,String id,long elapsed){if(elapsed<0||elapsed>30000)return;SharedPreferences p=prefs;if(p==null)return;String key="timing|"+ip+"|sample|"+id;try{String[] a=p.getString(key,"").split("\\|");long sum=Long.parseLong(a[0]),n=Long.parseLong(a[1]);if(n>=32){sum=sum*31/n;n=31;}p.edit().putString(key,(sum+elapsed)+"|"+(n+1)).apply();}catch(Exception ignored){p.edit().putString(key,elapsed+"|1").apply();}}
+    public static synchronized void clearTimings(String ip){SharedPreferences p=prefs;if(p==null||ip==null)return;String mac=p.getString("mac|"+ip,null);SharedPreferences.Editor e=p.edit().remove("timing|"+ip+"|baseline").remove("timing|"+ip+"|baseline|estimate").remove("timing|"+ip+"|cached").remove("timing|"+ip+"|cached|estimate").remove("timing|"+ip+"|measurement");if(mac!=null){e.remove("timing-identity|"+mac+"|baseline").remove("timing-identity|"+mac+"|baseline|estimate").remove("timing-identity|"+mac+"|cached").remove("timing-identity|"+mac+"|cached|estimate").remove("timing-identity|"+mac+"|measurement");}e.apply();CommunicationTiming.discard(ip);}
     public static String printerName(String ip){
         SharedPreferences p=prefs;if(p==null||ip==null)return "Saved printer";
         for(String id:new String[]{"1.3.6.1.2.1.25.3.2.1.3.1","1.3.6.1.2.1.1.1.0"}){
@@ -155,6 +164,11 @@ public final class AutoCache {
         for(String k:p.getAll().keySet())if(k.startsWith("entry|"+ip+"|")||k.startsWith("timing|"+ip+"|")||k.equals("mac|"+ip)||k.equals("status|"+ip)||(mac!=null&&(k.startsWith("identity|"+mac+"|")||k.startsWith("timing-identity|"+mac+"|")||k.equals("last|"+mac)||k.equals("dynamic|"+mac))))e.remove(k);e.apply();VERIFIED.remove(ip);PENDING_LIVE.remove(ip);CommunicationTiming.discard(ip);
     }
     public static synchronized void clearAll(){SharedPreferences p=prefs;if(p==null)return;cacheEpoch++;SharedPreferences.Editor e=p.edit();for(String k:p.getAll().keySet())if(k.startsWith("entry|")||k.startsWith("mac|")||k.startsWith("status|")||k.startsWith("identity|")||k.startsWith("last|")||k.startsWith("dynamic|")||k.startsWith("timing|")||k.startsWith("timing-identity|"))e.remove(k);e.apply();VERIFIED.clear();PENDING_LIVE.clear();CommunicationTiming.discardAll();}
+    private static boolean timingResponseMatches(Object result,String id,String state){
+        if(state.equals("ErrorRequestNoSuchName"))return true;
+        if(!state.equals("SuccessRequest"))return false;
+        try{Object values=result.getClass().getField("results").get(result);if(values==null||Array.getLength(values)!=1)return false;Object binding=Array.get(values,0);Object returned=binding.getClass().getMethod("getOid").invoke(binding);return id.equals(returned.getClass().getMethod("getValue").invoke(returned));}catch(Exception ignored){return false;}
+    }
     private static void stageLive(String ip,String oid,String value){
         LinkedHashMap<String,String> pending=PENDING_LIVE.get(ip);
         if(pending==null){if(PENDING_LIVE.size()>=8)PENDING_LIVE.remove(PENDING_LIVE.keySet().iterator().next());pending=new LinkedHashMap<>();PENDING_LIVE.put(ip,pending);}
@@ -163,34 +177,36 @@ public final class AutoCache {
     public static synchronized Object lookup(Object socket,Object request){
         try{
             Diagnostics.abandon();
-            REQUEST_EPOCH.remove();
+            REQUEST_EPOCH.remove();REQUEST_START.remove();
             String ip=address(socket),id=oid(request);if(ip==null||id==null)return null;
-            REQUEST_EPOCH.set(cacheEpoch);
+            REQUEST_EPOCH.set(cacheEpoch);REQUEST_START.set(System.nanoTime());
             CommunicationTiming.request(ip);
             Diagnostics.begin(ip,id);
-            Readiness.maybeCheck(ip);if(!enabled())return null;
+            Readiness.maybeCheck(ip);if(!enabled()||CommunicationTiming.isMeasuring(ip))return null;
             if(id.equals(MAC_OID)){VERIFIED.remove(ip);return null;}
             if(!isVerified(ip))return null;
             String saved=prefs.getString(key(ip,id),null);if(saved==null)return null;
             String[] parts=saved.split(":",2);ClassLoader loader=request.getClass().getClassLoader();
             Class<?> resultClass=loader.loadClass(SNMP+"SnmpResult");Object result=resultClass.getConstructor().newInstance();
             if(parts[0].equals("missing")){
-                Class<?> state=loader.loadClass(SNMP+"SnmpResult$SnmpState");resultClass.getField("state").set(result,state.getField("ErrorRequestNoSuchName").get(null));CommunicationTiming.cacheHit(ip);diagnosticResult("cache",result);REQUEST_EPOCH.remove();return result;
+                Class<?> state=loader.loadClass(SNMP+"SnmpResult$SnmpState");resultClass.getField("state").set(result,state.getField("ErrorRequestNoSuchName").get(null));CommunicationTiming.cacheHit(ip,id,sample(ip,id));REQUEST_START.remove();diagnosticResult("cache",result);REQUEST_EPOCH.remove();return result;
             }
             if(parts.length!=2)return null;Class<?> asn=loader.loadClass(WEST+"AsnObject"),vb=loader.loadClass(WEST+"Varbind");Object value;
             if(parts[0].equals("octets"))value=loader.loadClass(WEST+"AsnOctets").getConstructor(byte[].class).newInstance((Object)Base64.decode(parts[1],Base64.DEFAULT));
             else if(parts[0].equals("integer"))value=loader.loadClass(WEST+"AsnInteger").getConstructor(int.class).newInstance(Integer.parseInt(parts[1]));
             else return null;
-            Object bind=vb.getConstructor(String.class,asn).newInstance(id,value);Object array=Array.newInstance(vb,1);Array.set(array,0,bind);resultClass.getField("results").set(result,array);CommunicationTiming.cacheHit(ip);diagnosticResult("cache",result);REQUEST_EPOCH.remove();return result;
+            Object bind=vb.getConstructor(String.class,asn).newInstance(id,value);Object array=Array.newInstance(vb,1);Array.set(array,0,bind);resultClass.getField("results").set(result,array);CommunicationTiming.cacheHit(ip,id,sample(ip,id));REQUEST_START.remove();diagnosticResult("cache",result);REQUEST_EPOCH.remove();return result;
         }catch(Exception|LinkageError ignored){return null;}
     }
     public static synchronized void record(Object socket,Object request,Object result){
         try{
             diagnosticResult("printer",result);
-            Long requestEpoch=REQUEST_EPOCH.get();REQUEST_EPOCH.remove();if(requestEpoch!=null&&requestEpoch.longValue()!=cacheEpoch)return;
+            Long requestEpoch=REQUEST_EPOCH.get();REQUEST_EPOCH.remove();Long started=REQUEST_START.get();REQUEST_START.remove();if(requestEpoch!=null&&requestEpoch.longValue()!=cacheEpoch)return;
             String timingIp=address(socket);if(timingIp!=null&&oid(request)!=null)CommunicationTiming.response(timingIp);
-            if(!enabled()||result==null)return;String ip=address(socket),id=oid(request);if(ip==null||id==null)return;
-            String state=String.valueOf(result.getClass().getField("state").get(result));String encoded;
+            if(result==null)return;String ip=address(socket),id=oid(request);if(ip==null||id==null)return;
+            String state=String.valueOf(result.getClass().getField("state").get(result));
+            if(started!=null&&timingResponseMatches(result,id,state)){long elapsed=Math.max(0,(System.nanoTime()-started)/1000000L);saveSample(ip,id,elapsed);CommunicationTiming.liveSample(ip,elapsed);}
+            if(!enabled())return;String encoded;
             if(state.equals("ErrorRequestNoSuchName"))encoded="missing:";
             else if(state.equals("SuccessRequest")){
                 Object values=result.getClass().getField("results").get(result);if(values==null||Array.getLength(values)!=1)return;

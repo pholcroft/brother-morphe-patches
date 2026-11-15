@@ -32,8 +32,8 @@ public final class Diagnostics {
     }
     private static String quote(String value){return "\""+(value==null?"":value.replace("\"","\"\""))+"\"";}
     public static synchronized String csv(){
-        StringBuilder b=new StringBuilder("timestamp_unix_ms,printer_ip,oid,source,result,value_type,value,duration_ms,baseline_span_ms,baseline_requests,cached_span_ms,cached_requests\r\n");
-        for(Event e:EVENTS)b.append(e.p.wall).append(',').append(quote(e.p.ip)).append(',').append(quote(e.p.oid)).append(',').append(quote(e.source)).append(',').append(quote(e.state)).append(',').append(quote(e.type)).append(',').append(quote(e.value)).append(',').append(e.millis).append(',').append(AutoCache.timingValue(e.p.ip,"baseline")).append(',').append(AutoCache.timingRequestCount(e.p.ip,"baseline")).append(',').append(AutoCache.timingValue(e.p.ip,"cached")).append(',').append(AutoCache.timingRequestCount(e.p.ip,"cached")).append("\r\n");
+        StringBuilder b=new StringBuilder("timestamp_unix_ms,printer_ip,oid,source,result,value_type,value,duration_ms,baseline_span_ms,baseline_requests,cached_span_ms,cached_requests,first_estimated_avoided_ms,first_matched_hits,first_cache_hits,later_estimated_avoided_ms,later_matched_hits,later_cache_hits,uncached_measurement_span_ms,uncached_measurement_requests\r\n");
+        for(Event e:EVENTS)b.append(e.p.wall).append(',').append(quote(e.p.ip)).append(',').append(quote(e.p.oid)).append(',').append(quote(e.source)).append(',').append(quote(e.state)).append(',').append(quote(e.type)).append(',').append(quote(e.value)).append(',').append(e.millis).append(',').append(AutoCache.timingValue(e.p.ip,"baseline")).append(',').append(AutoCache.timingRequestCount(e.p.ip,"baseline")).append(',').append(AutoCache.timingValue(e.p.ip,"cached")).append(',').append(AutoCache.timingRequestCount(e.p.ip,"cached")).append(',').append(AutoCache.timingEstimateField(e.p.ip,"baseline",0)).append(',').append(AutoCache.timingEstimateField(e.p.ip,"baseline",1)).append(',').append(AutoCache.timingEstimateField(e.p.ip,"baseline",2)).append(',').append(AutoCache.timingEstimateField(e.p.ip,"cached",0)).append(',').append(AutoCache.timingEstimateField(e.p.ip,"cached",1)).append(',').append(AutoCache.timingEstimateField(e.p.ip,"cached",2)).append(',').append(AutoCache.timingValue(e.p.ip,"measurement")).append(',').append(AutoCache.timingRequestCount(e.p.ip,"measurement")).append("\r\n");
         return b.toString();
     }
     public static synchronized String recent(){
@@ -43,3 +43,4 @@ public final class Diagnostics {
     }
     private Diagnostics(){}
 }
+
