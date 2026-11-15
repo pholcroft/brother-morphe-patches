@@ -40,3 +40,6 @@ settings = (root / 'extensions/extension/src/main/java/app/template/extension/ex
 assert 'â€' not in settings, 'navigation labels contain mojibake'
 assert 'Timing details and help' in settings
 
+assert "Reset timing comparison" not in settings
+assert "Uncached test result" in settings
+

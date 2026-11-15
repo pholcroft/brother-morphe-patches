@@ -46,6 +46,11 @@ public class TimingSummaryTest {
         CommunicationTiming.startMeasurement(estimate);check(CommunicationTiming.isMeasuring(estimate),"measurement starts");
         CommunicationTiming.request(estimate);CommunicationTiming.response(estimate);CommunicationTiming.stopMeasurement(estimate);
         check(!CommunicationTiming.isMeasuring(estimate)&&AutoCache.timingSummary(estimate).contains("Uncached measurement"),"measurement stops and is retained");
+        check(AutoCache.uncachedMeasurementSummary(estimate).contains("Uncached test:"),"manual uncached result is available for the stop dialog");
+        check(!AutoCache.timingCardSummary(estimate).contains("Uncached test:"),"manual result does not clutter the card");
+        CommunicationTiming.startMeasurement(estimate);
+        check(!CommunicationTiming.stopMeasurement(estimate),"empty measurement must report no observed requests");
+
         String auto="192.0.2.11";CommunicationTiming.request(auto);CommunicationTiming.response(auto);Thread.sleep(3400);check(!AutoCache.timingValue(auto,"baseline").isEmpty(),"timing saves automatically after quiet period");
         AutoCache.clearAll();check(AutoCache.timingSummary(ip).contains("Not recorded"),"clearing removes timing summaries");
         System.out.println("Communication timing summary checks passed");

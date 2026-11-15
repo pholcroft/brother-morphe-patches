@@ -25,7 +25,7 @@ public final class CommunicationTiming {
     public static synchronized void liveSample(String ip,long ms){Burst b=BURSTS.get(ip);if(b!=null){b.liveTime+=ms;b.liveMeasured++;}}
     public static synchronized void startMeasurement(String ip){if(ip!=null){BURSTS.remove(ip);MEASUREMENTS.put(ip,new Burst(now()));}}
     public static synchronized boolean isMeasuring(String ip){return MEASUREMENTS.containsKey(ip);}
-    public static void stopMeasurement(String ip){Burst m;synchronized(CommunicationTiming.class){m=MEASUREMENTS.remove(ip);BURSTS.remove(ip);}if(m!=null&&m.live>0)AutoCache.saveMeasurement(ip,Math.max(0,m.last-m.first),m.live);}
+    public static boolean stopMeasurement(String ip){Burst m;synchronized(CommunicationTiming.class){m=MEASUREMENTS.remove(ip);BURSTS.remove(ip);}if(m==null||m.live==0)return false;AutoCache.saveMeasurement(ip,Math.max(0,m.last-m.first),m.live);return true;}
 
     public static synchronized void response(String ip){Burst b=BURSTS.get(ip);long n=now();if(b!=null)b.last=n;Burst m=MEASUREMENTS.get(ip);if(m!=null)m.last=n;}
     private static void finishIfIdle(String ip,Burst b){

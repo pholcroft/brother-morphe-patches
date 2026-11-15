@@ -12,7 +12,7 @@ The recorder shows supported individual SNMP GETs handled by the patch, their re
 
 Clearing saved printer data does not clear the diagnostic recording, and freshly received replies can be cached immediately if caching is enabled. For an uncached comparison, clear the diagnostic recording, switch the cache off in the main settings, then record a fresh preview.
 
-The saved-data screen shows the latest observed activity burst, an estimate of uncached request time, and estimated request time avoided. The CSV includes the same measurement components. A burst ends after three seconds without an observed individual GET. Background activity may be recorded, and one preview can contain multiple bursts. The estimates add request durations and do not represent elapsed preview time; requests may overlap, response times vary, and cache overhead is ignored. Reset the timing from the printer card menu without clearing saved responses.
+The saved-data screen shows the latest observed activity burst, an estimate of uncached request time, and estimated request time avoided. The CSV includes the same measurement components. A burst ends after three seconds without an observed individual GET. Background activity may be recorded, and one preview can contain multiple bursts. The estimates add request durations and do not represent elapsed preview time; requests may overlap, response times vary, and cache overhead is ignored. Clearing the saved printer data also clears its timing information.
 
 ## What you'll need
 
@@ -67,5 +67,5 @@ Please include:
 
 If you prefer not to share a capture publicly, a description of the model, features and observed behaviour is still useful. Please don't post sensitive data while waiting for a response.
 
-To collect an uncached comparison without changing the main cache switch, open the saved printer card menu and select **Measure without cache**. Open the preview and wait for its options, then return to the same menu and select **Stop uncached measurement**. Requests for that printer use live responses during this interval; other background requests can be included. The saved-data screen also estimates request time avoided using earlier matching live requests. This sum is not preview time and ignores cache overhead and overlapping requests.
+To collect an uncached comparison without changing the main cache switch, open the saved printer card menu and select **Measure without cache**. Open the preview and wait for its options, then return to the same menu and select **Stop uncached measurement**. Requests for that printer use live responses during this interval; other background requests can be included. The measured span appears in the **Uncached test result** dialog when you stop. If no requests were observed, the app reports that instead of presenting an old result as a new one. The saved-data screen also estimates request time avoided using earlier matching live requests. This sum is not preview time and ignores cache overhead and overlapping requests.
 

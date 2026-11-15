@@ -70,7 +70,6 @@ public final class CacheSettingsActivity extends Activity {
 
         menu.getMenu().add("Timing details and help");
 
-        menu.getMenu().add("Reset timing comparison");
 
         menu.getMenu().add(CommunicationTiming.isMeasuring(ip)?"Stop uncached measurement":"Measure without cache");
 
@@ -85,9 +84,8 @@ public final class CacheSettingsActivity extends Activity {
             if(item.getTitle().equals("Timing details and help")){new AlertDialog.Builder(this).setTitle("Timing details and help").setMessage(AutoCache.timingSummary(ip)+"\n\nLatest activity is the most recent burst of observed SNMP activity, not a preview time. A 3-second quiet period separates activity bursts; a single preview can contain more than one burst, and background requests may be included. Previous timings stay until you clear them.\n\nEstimated avoided adds previous live durations for matching cache hits. Estimated uncached adds that figure to the observed live request durations when all requests can be accounted for. Both are sums of request times, not elapsed preview time: requests can overlap, printer response times vary, and the estimate ignores cache overhead. Partial means some cache hits could not be estimated.\n\nUse Measure without cache in the printer menu for an optional live measurement.").setPositiveButton("Close",null).show();return true;}
             if(item.getTitle().equals("Measure without cache")){new AlertDialog.Builder(this).setTitle("Measure without cache?").setMessage("Requests for this printer will go to the printer until you stop the measurement. Open your print preview, wait for the options to load, then return here and choose Stop uncached measurement. Other printer activity can also be included. Cached responses remain saved.").setNegativeButton("Cancel",null).setPositiveButton("Start",(d,w)->{CommunicationTiming.startMeasurement(ip);render();}).show();return true;}
 
-            if(item.getTitle().equals("Stop uncached measurement")){CommunicationTiming.stopMeasurement(ip);render();return true;}
+            if(item.getTitle().equals("Stop uncached measurement")){boolean observed=CommunicationTiming.stopMeasurement(ip);render();if(observed)new AlertDialog.Builder(this).setTitle("Uncached test result").setMessage(AutoCache.uncachedMeasurementSummary(ip)+"\n\nTime from the first to the last observed request or response for this printer.").setPositiveButton("OK",null).show();else new AlertDialog.Builder(this).setTitle("No requests recorded").setMessage("No printer requests were observed during this measurement. Any previous uncached result has not changed. Try starting the measurement again before opening print preview.").setPositiveButton("OK",null).show();return true;}
 
-            if(item.getTitle().equals("Reset timing comparison")){new AlertDialog.Builder(this).setTitle("Reset communication times?").setMessage("This clears the timing comparison for this printer, but keeps its saved responses.").setNegativeButton("Cancel",null).setPositiveButton("Reset",(d,w)->{AutoCache.clearTimings(ip);render();}).show();return true;}
 
             if(item.getTitle().equals("Refresh status")){Readiness.refresh(ip);new Handler(Looper.getMainLooper()).postDelayed(()->{if(!isFinishing())render();},4500);return true;}
 
