@@ -18,8 +18,8 @@ PCAPdroid's normal capture uses Android's local VPN facility and doesn't require
 1. Open PCAPdroid. On the **Status** tab, find **App Filter** and select **Brother Print Service Plugin** (`com.brother.printservice`). This limits the capture to that app's traffic; the app you print *from* may have separate traffic that won't be included.
 2. In the dump/export mode selector on the same screen, choose **PCAP File**. The default **No Dump** mode only shows connections in PCAPdroid and does not save a packet capture.
 3. Tap **Start** (the play button). Choose a file name and location if prompted, and accept Android's VPN confirmation. PCAPdroid will continue recording in the background.
-4. Open your harmless test document and choose **Print**. Select your Brother printer, wait for the preview and available print options to finish loading, then cancel. **Don't press the final Print button** for this test.
-5. Return to PCAPdroid and tap **Stop**. Keep or share the resulting `.pcap` file. You can also export a connections `.csv` if you find it useful, but please include the PCAP: a connection summary alone doesn't contain the same packet details and timing.
+4. Open your harmless test document and choose **Print**. If needed, select your Brother printer. Wait for the preview to appear and the available print options to finish loading. **Don't press the final Print button, Cancel, or anything else in the print screen.**
+5. Switch straight back to PCAPdroid and tap **Stop**. This keeps the capture focused on loading the preview and options. Once recording has stopped, you can close the print screen. Keep or share the resulting `.pcap` file. You can also export a connections `.csv` if you find it useful, but please include the PCAP: a connection summary alone doesn't contain the same packet details and timing.
 
 Use a short capture for one test. The app filter may exclude traffic belonging to other processes, and a VPN-mode capture only sees traffic routed through the phone; it is not a complete capture of everything on the LAN. Menu names may differ between PCAPdroid versions. See its [dump mode instructions](https://emanuele-f.github.io/PCAPdroid/dump_modes.html#23-pcap-file) for more detail.
 
@@ -54,3 +54,4 @@ Please include:
 - Any optional screenshots or screen recording, after reviewing them for personal information.
 
 If you prefer not to share a capture publicly, a description of the model, features and observed behaviour is still useful. Please don't post sensitive data while waiting for a response.
+
