@@ -12,7 +12,7 @@ public class PrinterIdentityTest {
     static void check(boolean x,String m){if(!x)throw new AssertionError(m);}
     static BrDatagramSocket socket(String ip)throws Exception{return new BrDatagramSocket(InetAddress.getByName(ip));}
     static SnmpRequest request(String oid){return new SnmpRequest(oid,-96);}
-    static void record(BrDatagramSocket s,String oid,byte[] value){SnmpResult r=new SnmpResult();r.results=new Varbind[]{new Varbind(oid,new AsnOctets(value))};AutoCache.record(s,request(oid),r);}
+    static void record(BrDatagramSocket s,String oid,byte[] value){SnmpRequest q=request(oid);AutoCache.lookup(s,q);SnmpResult r=new SnmpResult();r.results=new Varbind[]{new Varbind(oid,new AsnOctets(value))};AutoCache.record(s,q,r);}
     static void restart()throws Exception{java.lang.reflect.Method m=AutoCache.class.getDeclaredMethod("resetVerification");m.setAccessible(true);m.invoke(null);}
     public static void main(String[] args)throws Exception{
         Context c=new Context();AutoCache.init(c);BrDatagramSocket old=socket("192.0.2.10"), moved=socket("192.0.2.20"), other=socket("192.0.2.30");

@@ -10,6 +10,8 @@ Patch bundle **1.4.0 or later** has a lightweight recorder built in. Open Androi
 
 The recorder shows supported individual SNMP GETs handled by the patch, their results and response values, source (cache or printer), and elapsed hook time. It does not cover discovery broadcasts, other protocols, all failures, print jobs or the original unpatched app. Data is kept in memory until the app process exits, with a 2,000-event limit. A CSV can include printer IP addresses, identifiers and responses; Base64 byte strings are not encrypted. Review it before sharing. For traffic outside the recorder's coverage, follow the PCAPdroid steps below.
 
+Clearing saved printer data does not clear the diagnostic recording, and freshly received replies can be cached immediately if caching is enabled. For an uncached comparison, clear the diagnostic recording, switch the cache off in the main settings, then record a fresh preview.
+
 The saved-data screen and CSV also include automatic communication-span comparisons when available. The first observed burst with no cache hits is the baseline; the latest burst with cache hits is the cached comparison. A burst ends after three seconds without an observed individual GET, and the displayed duration excludes that quiet period. Request counts may differ and not all printer traffic is observed, so the numbers are not guaranteed to represent identical work or the time until the preview appears. Reset a printer's timing comparison from its card menu without clearing its saved responses. To capture a new baseline, reset the times, turn off the cache, open a preview, then turn it back on and repeat.
 
 ## What you'll need
