@@ -17,8 +17,8 @@ public final class SettingsIntegration {
         View view = activity.findViewById(id);
         if (!(view instanceof ViewGroup)) return;
         ViewGroup scroll = (ViewGroup) view;
-        if (scroll.getChildCount() != 1 || !(scroll.getChildAt(0) instanceof LinearLayout)) return;
-        LinearLayout parent = (LinearLayout) scroll.getChildAt(0);
+        if (scroll.getChildCount() != 1 || !(scroll.getChildAt(0) instanceof ViewGroup)) return;
+        ViewGroup parent = (ViewGroup) scroll.getChildAt(0);
         View previous = parent.findViewWithTag("morphe-fast-preview-controls");
         if (previous != null) parent.removeView(previous);
         LinearLayout section = new LinearLayout(activity);

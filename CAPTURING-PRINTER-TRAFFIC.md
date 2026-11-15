@@ -27,6 +27,8 @@ Use a short capture for one test. The app filter may exclude traffic belonging t
 
 These separate captures are optional, but keeping them distinct makes it easier to understand what changed. Use the same phone, printer, document, network and print options where possible. Note whether the printer was asleep or awake and whether preview actually appeared.
 
+The cache controls require patch bundle **1.3.2 or later**. If they aren't visible, refresh the Morphe source and repatch the original APK. You can still capture the original app's traffic without these controls.
+
 1. **Normal requests:** With the patched service installed, open Android printing settings → Brother Print Service Plugin settings → **Faster print previews**, and turn the cache off. Capture one preview as described above and label the file `cache-off.pcap`. This uses the patched service's normal request path; it is not necessarily identical to capturing the original unmodified app. If you're using the original app instead, label it `original.pcap`.
 2. **Learning:** Turn the cache on. In **Manage saved printer data**, clear the entry for the test printer if you are happy to remove its saved responses. This makes the next use start without that printer's saved cache; it does not reset the printer. Capture a preview and label it `cache-learning.pcap`. The first preview may still be slow.
 3. **Warm cache:** Without clearing the saved data, record another preview and label it `cache-warm.pcap`. New or unsupported requests may still go to the printer.
@@ -54,4 +56,3 @@ Please include:
 - Any optional screenshots or screen recording, after reviewing them for personal information.
 
 If you prefer not to share a capture publicly, a description of the model, features and observed behaviour is still useful. Please don't post sensitive data while waiting for a response.
-
