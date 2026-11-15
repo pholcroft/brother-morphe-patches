@@ -26,13 +26,13 @@ public final class CacheSettingsActivity extends Activity {
         ScrollView scroll=new ScrollView(this);content=new LinearLayout(this);content.setOrientation(LinearLayout.VERTICAL);
         int pad=(int)(20*getResources().getDisplayMetrics().density);content.setPadding(pad,pad,pad,pad);
         scroll.addView(content,new ScrollView.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,ViewGroup.LayoutParams.WRAP_CONTENT));setContentView(scroll);
-        content.addView(text("Printer response cache",23));
-        content.addView(text("The first preview learns printer responses. Later previews reuse them. Stored values are private to this app and may be stale.",15));
-        Switch enabled=new Switch(this);enabled.setText("Use and learn cached responses");enabled.setChecked(AutoCache.enabled());enabled.setOnCheckedChangeListener((v,checked)->AutoCache.setEnabled(checked));content.addView(enabled);
+        content.addView(text("Faster print previews",23));
+        content.addView(text("Save printer responses on this device to make future previews faster. The first preview learns them; saved information may become out of date.",15));
+        Switch enabled=new Switch(this);enabled.setText("Speed up previews with saved printer responses");enabled.setChecked(AutoCache.enabled());enabled.setOnCheckedChangeListener((v,checked)->AutoCache.setEnabled(checked));content.addView(enabled);
         Switch live=new Switch(this);live.setText("Check printer reachability and readiness in background");live.setChecked(AutoCache.liveCheckEnabled());live.setOnCheckedChangeListener((v,checked)->{AutoCache.setLiveCheckEnabled(checked);if(checked)for(String ip:AutoCache.printers())Readiness.refresh(ip);render();});content.addView(live);
         content.addView(text("The live check reports the printer's IPP state and whether it accepts jobs. It does not block preview or guarantee a successful print.",14));
         ArrayList<String> printers=new ArrayList<>(AutoCache.printers());Collections.sort(printers);
-        if(printers.isEmpty())content.addView(text("No printers learned yet. Open a print preview once to learn one.",16));
+        if(printers.isEmpty())content.addView(text("No saved printers yet. Open a print preview to start saving responses.",16));
         for(String ip:printers){
             String mac=AutoCache.readString("mac|"+ip,"");String status=AutoCache.liveCheckEnabled()?AutoCache.readString("status|"+ip,"Not checked yet"):"Live check off";
             content.addView(text("Printer: "+ip+(mac.isEmpty()?"":"\nHardware address: "+mac)+"\n"+status,16));

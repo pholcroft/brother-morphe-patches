@@ -1,24 +1,31 @@
-# Brother Fast Preview Morphe patches
+# Faster print previews for Brother printers
 
-Experimental patches for Brother Print Service Plugin **1.17.0**. Select only one of the two patches when patching the original APK.
+**Make repeat print previews faster by remembering printer responses on your device.** The first preview learns; later previews can reuse what the printer already told it. No printer address or snapshot to enter.
 
-## Automatic printer response cache
+This is an unofficial, experimental Morphe patch for **Brother Print Service Plugin 1.17.0**. It has been tested on a Google Pixel 9 with a Brother HL-L8260CDW. Other Brother printers may benefit, but have not yet been verified.
 
-Select **Automatic printer response cache** and deselect **Fast preview for HL-L8260CDW**. No printer address or snapshot is needed. Brother discovers printers as usual. The patch learns supported single-object SNMP responses as the service requests them, saves them privately on the Android device per IP address, and reuses them on later requests. A first preview may be slower while values are learned. Timeouts and unsupported response types are not cached; unrecognized requests go to the printer. Other traffic, including discovery, is unchanged.
+## Get started
 
-In Android's printing settings, open Brother Print Service Plugin's settings. The Fast preview section provides switches for caching and the optional readiness check; Manage saved printer data opens the per-printer and clear-all controls. The optional background check uses IPP to report printer state and whether it accepts jobs. It does not delay preview, change Brother's print status, or guarantee that a job will print. A MAC address is shown if learned, but the cache is keyed by IP and does not verify the MAC on reuse. An IP change causes a new cache; an IP reassigned to a different printer may reuse old data until cleared.
+1. Add this Morphe source and refresh it:
+   `https://raw.githubusercontent.com/pholcroft/brother-morphe-patches/refs/heads/main/patches-bundle.json`
+2. Select the original Brother Print Service Plugin 1.17.0 APK and apply **Faster print previews**.
+3. Install the patched APK and open a print preview. Subsequent previews can reuse saved responses.
 
-Cached replies may be stale and give incorrect paper, toner or availability information. This mode has been built and tested locally but still needs testing on an Android device.
+The first preview may still be slow while responses are learned. The patched APK may have a different signing key from your existing installation; replacing that installation may require uninstalling it, which can delete its settings and data. Keep a way to restore the original app.
 
-## Fixed snapshot (existing fast version)
+## Settings
 
-Select **Fast preview for HL-L8260CDW** and deselect the automatic patch. Enter the printer IPv4 address and private snapshot when patching. This speed-only experiment intercepts single-object SNMP GETs to that address, returns recorded values and responds `noSuchName` for unknown OIDs. Discovery and other request types are unchanged. The snapshot can contain identifiers and is embedded in the resulting APK. The original version 1.1.1 bundle remains available in this repository.
+Open Android's printing settings, then Brother Print Service Plugin's settings. Under **Faster print previews**, you can turn the cache on or off, enable an optional background readiness check, or choose **Manage saved printer data** to clear a printer or all saved printers. Turning the cache off leaves saved data intact and uses normal requests.
 
-## Morphe source
+The readiness check reports the printer's IPP state and whether it accepts jobs. It does not block preview, update Brother's own print status, or guarantee a successful print.
 
-Add `https://raw.githubusercontent.com/pholcroft/brother-morphe-patches/refs/heads/main/patches-bundle.json` as a remote source and refresh it. Select the original Brother APK, choose one patch and install the resulting APK. A differently signed installation may need to be removed before installing; removing it also removes its data and settings.
+## How it works and limitations
 
-The public bundle contains no APK, capture, private snapshot, or private printer address.
+The patch saves supported individual SNMP GET responses per printer address in the app's private storage and reuses them. Timeouts, unsupported response types, multi-object requests, discovery broadcasts and other traffic follow the original path. The cache can contain stale status or capability information, so the service may show incorrect paper, toner or availability information. Clear a printer's saved data to relearn it.
+
+The cache uses the printer's IP address; a MAC address may be recorded but is not checked on reuse. A changed IP is learned as a new printer. If an address is reassigned to another printer, clear the old saved data first. There is no automatic expiry.
+
+Read the [technical analysis and packet timelines](TECHNICAL-ANALYSIS.md) for the measurements, proposed improvements and evidence limits. The public source contains no APK, packet capture, private snapshot or private printer address.
 
 ## Development
 
