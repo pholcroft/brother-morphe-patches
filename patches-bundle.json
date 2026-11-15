@@ -1,7 +1,7 @@
 {
-  "created_at": "2026-11-15T20:41:49",
-  "description": "Estimate request time avoided and optionally measure without cache.",
-  "download_url": "https://raw.githubusercontent.com/pholcroft/brother-morphe-patches/dev/patches-1.5.1-dev.6.mpp",
-  "version": "1.5.1-dev.6"
+  "created_at": "2026-11-15T20:51:01",
+  "description": "Simplify the saved-printer timing display.",
+  "download_url": "https://raw.githubusercontent.com/pholcroft/brother-morphe-patches/dev/patches-1.5.1-dev.7.mpp",
+  "version": "1.5.1-dev.7"
 }
 
