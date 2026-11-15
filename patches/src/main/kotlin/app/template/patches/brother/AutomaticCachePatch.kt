@@ -31,6 +31,13 @@ val automaticBrotherCache = patch(
         Fingerprint(definingClass="Lcom/brother/printservice/GlobalApp;",name="onCreate",returnType="V",parameters=emptyList()).method.addInstruction(1,
             "invoke-static {p0}, $AUTO->init(Landroid/content/Context;)V")
 
+        val settings = Fingerprint(definingClass="Lcom/brother/printservice/settings/SettingsActivity;", name="onCreate", returnType="V", parameters=listOf("Landroid/os/Bundle;"), filters=listOf(methodCall(name="setContentView")))
+        settings.method.addInstruction(settings.instructionMatches.single().index + 1,
+            "invoke-static {p0}, Lapp/template/extension/extension/SettingsIntegration;->attach(Landroid/app/Activity;)V")
+        val resume = Fingerprint(definingClass="Lcom/brother/printservice/settings/SettingsActivity;", name="onResume", returnType="V", parameters=emptyList()).method
+        resume.addInstruction(resume.implementation!!.instructions.count() - 1,
+            "invoke-static {p0}, Lapp/template/extension/extension/SettingsIntegration;->attach(Landroid/app/Activity;)V")
+
         val request = Fingerprint(definingClass=CLIENT,name="requestGet",returnType=RESULT,parameters=listOf(REQUEST,"I","I"),filters=listOf(methodCall(definingClass=CLIENT,name="decResPacket")))
         val method = request.method
         val resultIndex = request.instructionMatches.single().index + 1
@@ -54,7 +61,7 @@ val automaticBrotherCache = patch(
             }
         }
         resourceXml("res/xml/print_service.xml").use { xml ->
-            xml.root.setAttribute("android:settingsActivity", ACTIVITY)
+            xml.root.setAttribute("android:settingsActivity", "com.brother.printservice.settings.SettingsActivity")
         }
     }
 }
