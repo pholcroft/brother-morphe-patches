@@ -47,5 +47,7 @@ Have another Brother model or one with extra features? A short recording of the 
 
 Build with `./gradlew buildAndroid`, Java 17+, Android SDK 36 and access to Morphe's GitHub Packages dependencies. Tests under `tests/` use simulated Brother classes and contain no proprietary APK code.
 
+When publishing a new bundle, also run `./gradlew :patches:buildAndroid :patches:generatePatchesList` and publish the generated root `patches-list.json` alongside the matching bundle and metadata. The Morphe community index uses this file to discover the supported app and patch.
+
 Licensed under GPL-3.0; see LICENSE and NOTICE.
 
