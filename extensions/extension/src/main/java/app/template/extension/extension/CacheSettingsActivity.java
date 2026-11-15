@@ -139,7 +139,6 @@ public final class CacheSettingsActivity extends Activity {
 
         for(String ip:printers){LinearLayout.LayoutParams params=new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,ViewGroup.LayoutParams.WRAP_CONTENT);params.bottomMargin=dp(12);content.addView(printerCard(ip),params);}
 
-        if(!printers.isEmpty()){TextView note=text("Estimates are request times, not preview time.",12,MUTED);note.setPadding(0,dp(4),0,0);content.addView(note);}
 
         View separator=new View(this);separator.setBackgroundColor(0xffdadde0);LinearLayout.LayoutParams line=new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,dp(1));line.topMargin=dp(20);content.addView(separator,line);
 

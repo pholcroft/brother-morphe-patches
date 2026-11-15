@@ -34,13 +34,13 @@ public class TimingSummaryTest {
         CommunicationTiming.request(complete);CommunicationTiming.cacheHit(complete,"1.2.3",40);CommunicationTiming.finishAll();
         check(AutoCache.timingSummary(complete).contains("Estimated total request time without cache: 0.06 s"),"sum live and matched expected durations");
         String card=AutoCache.timingCardSummary(complete);
-        check(card.contains("Latest activity:")&&card.contains("Est. uncached request time: 0.06 s")&&card.contains("Est. request time avoided: 0.04 s"),"show latest burst and estimates together");
+        check(card.contains("Actual time:")&&card.contains("Without cache: ~0.06 s of requests (~0.04 s avoided)"),"show latest burst and estimates together");
         check(!card.contains("First activity")&&!card.contains("Later cached"),"do not label bursts as previews");
         check(AutoCache.timingCardSummary(estimate).contains("partial"),"incomplete savings estimate is labelled");
-        check(AutoCache.timingCardSummary(estimate).contains("Est. uncached request time: Not available"),"do not guess full estimate when incomplete");
+        check(AutoCache.timingCardSummary(estimate).contains("Without cache: estimate unavailable"),"do not guess full estimate when incomplete");
         AutoCache.saveTiming(complete,123,1,0,0,0,120,1);
         card=AutoCache.timingCardSummary(complete);
-        check(card.contains("0.12 s")&&card.contains("Est. request time avoided: 0.00 s"),"latest live-only burst replaces cached burst");
+        check(card.contains("0.12 s")&&card.contains("~0.00 s avoided"),"latest live-only burst replaces cached burst");
         check(AutoCache.timingValue(complete,"latest").equals("123"),"store latest live burst");
         AutoCache.clearTimings(complete);check(AutoCache.timingValue(complete,"latest").isEmpty(),"reset clears latest measurement");
         CommunicationTiming.startMeasurement(estimate);check(CommunicationTiming.isMeasuring(estimate),"measurement starts");
