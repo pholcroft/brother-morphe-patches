@@ -6,8 +6,10 @@ This is an unofficial, experimental Morphe patch for **Brother Print Service Plu
 
 ## Get started
 
-1. Add this Morphe source and refresh it:
-   `https://raw.githubusercontent.com/pholcroft/brother-morphe-patches/refs/heads/main/patches-bundle.json`
+1. In Morphe, open **Sources**, tap **+**, and add the repository URL:
+   `https://github.com/pholcroft/brother-morphe-patches`
+
+   Alternatively, open [Add this source in Morphe](https://morphe.software/add-source?github=pholcroft/brother-morphe-patches) on your Android device. Morphe will ask before adding it.
 2. Select the original Brother Print Service Plugin 1.17.0 APK and apply **Faster print previews**.
 3. Install the patched APK and open a print preview. Subsequent previews can reuse saved responses.
 
@@ -46,3 +48,4 @@ Have another Brother model or one with extra features? A short recording of the 
 Build with `./gradlew buildAndroid`, Java 17+, Android SDK 36 and access to Morphe's GitHub Packages dependencies. Tests under `tests/` use simulated Brother classes and contain no proprietary APK code.
 
 Licensed under GPL-3.0; see LICENSE and NOTICE.
+
