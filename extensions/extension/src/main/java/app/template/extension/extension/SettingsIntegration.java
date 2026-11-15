@@ -30,6 +30,12 @@ public final class SettingsIntegration {
         heading.setText("Faster print previews");
         heading.setTextSize(19);
         section.addView(heading);
+        TextView attribution = new TextView(activity);
+        attribution.setText("Unofficial community patch · Not affiliated with Brother");
+        attribution.setTextSize(12);
+        attribution.setTextColor(0xff666666);
+        attribution.setTypeface(null, 2);
+        section.addView(attribution);
         Switch cache = new Switch(activity);
         cache.setText("Speed up previews with saved printer responses");
         cache.setChecked(AutoCache.enabled());

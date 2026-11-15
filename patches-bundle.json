@@ -1,6 +1,6 @@
 {
-  "created_at": "2026-11-15T14:50:36",
-  "description": "Fix missing faster preview settings in Brother print service.",
-  "download_url": "https://raw.githubusercontent.com/pholcroft/brother-morphe-patches/main/patches-1.3.2.mpp",
-  "version": "1.3.2"
+  "created_at": "2026-11-15T15:05:38",
+  "description": "Clearly label the unofficial patch in printer settings.",
+  "download_url": "https://raw.githubusercontent.com/pholcroft/brother-morphe-patches/main/patches-1.3.3.mpp",
+  "version": "1.3.3"
 }

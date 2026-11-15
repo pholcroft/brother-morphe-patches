@@ -6,6 +6,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.LinearLayout;
@@ -25,8 +26,12 @@ public final class CacheSettingsActivity extends Activity {
     private void render(){
         ScrollView scroll=new ScrollView(this);content=new LinearLayout(this);content.setOrientation(LinearLayout.VERTICAL);
         int pad=(int)(20*getResources().getDisplayMetrics().density);content.setPadding(pad,pad,pad,pad);
+        getWindow().getDecorView().setSystemUiVisibility(getWindow().getDecorView().getSystemUiVisibility() | View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR);
+        scroll.setClipToPadding(false);
+        scroll.setOnApplyWindowInsetsListener((view,insets)->{view.setPadding(insets.getSystemWindowInsetLeft(),insets.getSystemWindowInsetTop(),insets.getSystemWindowInsetRight(),insets.getSystemWindowInsetBottom());return insets.consumeSystemWindowInsets();});
         scroll.addView(content,new ScrollView.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,ViewGroup.LayoutParams.WRAP_CONTENT));setContentView(scroll);
         content.addView(text("Faster print previews",23));
+        TextView attribution=text("Unofficial community patch · Not affiliated with Brother",12);attribution.setTextColor(0xff666666);attribution.setTypeface(null,2);content.addView(attribution);
         content.addView(text("Save printer responses on this device to make future previews faster. The first preview learns them; saved information may become out of date.",15));
         Switch enabled=new Switch(this);enabled.setText("Speed up previews with saved printer responses");enabled.setChecked(AutoCache.enabled());enabled.setOnCheckedChangeListener((v,checked)->AutoCache.setEnabled(checked));content.addView(enabled);
         Switch live=new Switch(this);live.setText("Check printer reachability and readiness in background");live.setChecked(AutoCache.liveCheckEnabled());live.setOnCheckedChangeListener((v,checked)->{AutoCache.setLiveCheckEnabled(checked);if(checked)for(String ip:AutoCache.printers())Readiness.refresh(ip);render();});content.addView(live);
