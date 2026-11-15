@@ -1,6 +1,6 @@
 {
-  "created_at": "2026-11-15T18:15:00",
-  "description": "Recognise known printers when their IP address changes.",
-  "download_url": "https://raw.githubusercontent.com/pholcroft/brother-morphe-patches/dev/patches-1.5.1-dev.2.mpp",
-  "version": "1.5.1-dev.2"
+  "created_at": "2026-11-15T18:27:53",
+  "description": "Show and export automatic printer communication timings.",
+  "download_url": "https://raw.githubusercontent.com/pholcroft/brother-morphe-patches/dev/patches-1.5.1-dev.3.mpp",
+  "version": "1.5.1-dev.3"
 }

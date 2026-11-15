@@ -33,10 +33,14 @@ public final class CacheSettingsActivity extends Activity {
     private void printerMenu(View anchor,String ip){
         PopupMenu menu=new PopupMenu(this,anchor);
         menu.getMenu().add("Printer details");
+        menu.getMenu().add("About communication times");
+        menu.getMenu().add("Reset timing comparison");
         menu.getMenu().add("Refresh status").setEnabled(AutoCache.liveCheckEnabled());
         menu.getMenu().add("Clear saved data");
         menu.setOnMenuItemClickListener(item->{
             if(item.getTitle().equals("Printer details")){String mac=AutoCache.readString("mac|"+ip,"");new AlertDialog.Builder(this).setTitle("Printer details").setMessage(AutoCache.printerName(ip)+"\nAddress: "+ip+"\nHardware address: "+(mac.isEmpty()?"Not recorded":mac)+(AutoCache.hasChangedAddress(ip)?"\nThis printer has been seen at another address.":"")+"\n\nThe mod checks the hardware address when the service requests it and can reuse saved responses if the printer moves to a new IP address. If the address cannot be checked, normal printer requests are used.").setPositiveButton("Close",null).show();return true;}
+            if(item.getTitle().equals("About communication times")){new AlertDialog.Builder(this).setTitle("About communication times").setMessage("These are approximate spans of individual SNMP requests observed by the mod, not the time until the preview appears. A 3-second quiet period separates activity bursts. The first burst with no cache hits is kept as the 'without cache' comparison; the latest burst with cache hits is shown as 'with cache'. Request counts can differ, so the two times may not be directly comparable. To record a baseline, turn the cache off and open a preview.").setPositiveButton("Close",null).show();return true;}
+            if(item.getTitle().equals("Reset timing comparison")){new AlertDialog.Builder(this).setTitle("Reset communication times?").setMessage("This clears the timing comparison for this printer, but keeps its saved responses.").setNegativeButton("Cancel",null).setPositiveButton("Reset",(d,w)->{AutoCache.clearTimings(ip);render();}).show();return true;}
             if(item.getTitle().equals("Refresh status")){Readiness.refresh(ip);new Handler(Looper.getMainLooper()).postDelayed(()->{if(!isFinishing())render();},4500);return true;}
             if(item.getTitle().equals("Clear saved data")){clearPrinter(ip);return true;}
             return false;
@@ -48,6 +52,7 @@ public final class CacheSettingsActivity extends Activity {
         LinearLayout details=new LinearLayout(this);details.setOrientation(LinearLayout.VERTICAL);
         TextView name=text(AutoCache.printerName(ip),17,TEXT);name.setTypeface(null,Typeface.BOLD);details.addView(name);
         TextView address=text(ip+(AutoCache.hasChangedAddress(ip)?" · Address changed":""),14,MUTED);address.setPadding(0,dp(5),0,0);details.addView(address);
+        TextView timings=text(AutoCache.timingSummary(ip),12,MUTED);timings.setPadding(0,dp(8),0,0);details.addView(timings);timings.postDelayed(()->timings.setText(AutoCache.timingSummary(ip)),3500);
         card.addView(details,new LinearLayout.LayoutParams(0,ViewGroup.LayoutParams.WRAP_CONTENT,1));
         String status=AutoCache.liveCheckEnabled()?AutoCache.readString("status|"+ip,"Not checked yet"):"Check off";
         boolean ready=status.startsWith("Ready ·") || status.equals("Ready");
@@ -67,6 +72,7 @@ public final class CacheSettingsActivity extends Activity {
         ArrayList<String> printers=new ArrayList<>(AutoCache.printers());Collections.sort(printers);
         if(printers.isEmpty()){TextView empty=text("No saved printers yet. Open a print preview to start saving responses.",15,MUTED);empty.setPadding(0,0,0,dp(16));content.addView(empty);}
         for(String ip:printers){LinearLayout.LayoutParams params=new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,ViewGroup.LayoutParams.WRAP_CONTENT);params.bottomMargin=dp(12);content.addView(printerCard(ip),params);}
+        if(!printers.isEmpty()){TextView note=text("Times show observed SNMP activity, not preview time.",12,MUTED);note.setPadding(0,dp(4),0,0);content.addView(note);}
         View separator=new View(this);separator.setBackgroundColor(0xffdadde0);LinearLayout.LayoutParams line=new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,dp(1));line.topMargin=dp(20);content.addView(separator,line);
         LinearLayout diagnostics=new LinearLayout(this);diagnostics.setGravity(Gravity.CENTER_VERTICAL);diagnostics.setPadding(0,dp(18),0,dp(18));diagnostics.setContentDescription("Diagnostics: record requests and export CSV");diagnostics.setOnClickListener(v->startActivity(new Intent(this,DiagnosticsActivity.class)));
         LinearLayout labels=new LinearLayout(this);labels.setOrientation(LinearLayout.VERTICAL);TextView dtitle=text("Diagnostics",17,TEXT);dtitle.setTypeface(null,Typeface.BOLD);labels.addView(dtitle);TextView sub=text("Record requests and export CSV",14,MUTED);sub.setPadding(0,dp(3),0,0);labels.addView(sub);diagnostics.addView(labels,new LinearLayout.LayoutParams(0,ViewGroup.LayoutParams.WRAP_CONTENT,1));TextView arrow=text("›",26,TEXT);diagnostics.addView(arrow);content.addView(diagnostics);

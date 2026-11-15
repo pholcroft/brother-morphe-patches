@@ -16,7 +16,7 @@ public class PrinterIdentityTest {
     static void restart()throws Exception{java.lang.reflect.Method m=AutoCache.class.getDeclaredMethod("resetVerification");m.setAccessible(true);m.invoke(null);}
     public static void main(String[] args)throws Exception{
         Context c=new Context();AutoCache.init(c);BrDatagramSocket old=socket("192.0.2.10"), moved=socket("192.0.2.20"), other=socket("192.0.2.30");
-        record(old,MAC,A);record(old,DATA,new byte[]{65});check(AutoCache.lookup(old,request(DATA))!=null,"initial cache should work after identifying printer");
+        record(old,MAC,A);record(old,DATA,new byte[]{65});AutoCache.saveTiming("192.0.2.10",1200,3,0);check(AutoCache.lookup(old,request(DATA))!=null,"initial cache should work after identifying printer");
         check(AutoCache.lookup(old,request(MAC))==null,"hardware identity must be checked live");
         check(AutoCache.lookup(old,request(DATA))==null,"cache unavailable while identity check pending");
         record(old,MAC,A);check(AutoCache.lookup(old,request(DATA))!=null,"verified cache resumes after live check");
@@ -24,6 +24,7 @@ public class PrinterIdentityTest {
         record(old,MAC,A);check(AutoCache.lookup(old,request(DATA))!=null,"same identity restores cache");
         check(AutoCache.lookup(moved,request(DATA))==null,"new address starts uncached");record(moved,MAC,A);
         check(AutoCache.lookup(moved,request(DATA))!=null,"same hardware at new IP must reuse cache");
+        check(AutoCache.timingValue("192.0.2.20","baseline").equals("1200"),"timing summary follows moved printer");
         check(AutoCache.hasChangedAddress("192.0.2.20"),"mark address change");
         check(AutoCache.lookup(old,request(DATA))==null,"old IP cannot reuse moved printer cache");
         record(old,MAC,B);check(AutoCache.lookup(old,request(DATA))==null,"different printer must not get old data");record(old,DATA,new byte[]{66});

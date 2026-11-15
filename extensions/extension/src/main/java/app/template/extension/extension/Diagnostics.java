@@ -32,8 +32,8 @@ public final class Diagnostics {
     }
     private static String quote(String value){return "\""+(value==null?"":value.replace("\"","\"\""))+"\"";}
     public static synchronized String csv(){
-        StringBuilder b=new StringBuilder("timestamp_unix_ms,printer_ip,oid,source,result,value_type,value,duration_ms\r\n");
-        for(Event e:EVENTS)b.append(e.p.wall).append(',').append(quote(e.p.ip)).append(',').append(quote(e.p.oid)).append(',').append(quote(e.source)).append(',').append(quote(e.state)).append(',').append(quote(e.type)).append(',').append(quote(e.value)).append(',').append(e.millis).append("\r\n");
+        StringBuilder b=new StringBuilder("timestamp_unix_ms,printer_ip,oid,source,result,value_type,value,duration_ms,baseline_span_ms,baseline_requests,cached_span_ms,cached_requests\r\n");
+        for(Event e:EVENTS)b.append(e.p.wall).append(',').append(quote(e.p.ip)).append(',').append(quote(e.p.oid)).append(',').append(quote(e.source)).append(',').append(quote(e.state)).append(',').append(quote(e.type)).append(',').append(quote(e.value)).append(',').append(e.millis).append(',').append(AutoCache.timingValue(e.p.ip,"baseline")).append(',').append(AutoCache.timingRequestCount(e.p.ip,"baseline")).append(',').append(AutoCache.timingValue(e.p.ip,"cached")).append(',').append(AutoCache.timingRequestCount(e.p.ip,"cached")).append("\r\n");
         return b.toString();
     }
     public static synchronized String recent(){

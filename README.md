@@ -25,6 +25,8 @@ Open Android's printing settings, then Brother Print Service Plugin's settings. 
 
 On the saved-data page, the printer's reported description is shown when available, alongside its address. Open the three-dot menu to see its recorded hardware address, refresh its status or clear its saved responses. Refresh is available when the background readiness check is enabled. **Clear all saved printers** is at the bottom of the page; clearing asks for confirmation.
 
+Each printer card also shows the first observed **without cache** and most recent **with cache** communication spans. These are approximate durations of individual SNMP GET activity observed by the mod, separated into bursts by three seconds without such activity. They are not tap-to-preview measurements; background polling, missing operations and different request counts can make comparisons misleading. Timings are collected automatically without diagnostic recording. If the baseline is missing, disable the cache and open a preview, then re-enable it and open another. Use the card menu to reset the timing comparison without clearing cached responses. Previously recorded captures cannot be retroactively timed by the app.
+
 The settings controls require patch bundle **1.3.2 or later**. An earlier layout bug could prevent them appearing; refresh the Morphe source and repatch the original APK to update an older installation.
 
 The readiness check reports the printer's IPP state and whether it accepts jobs. It does not block preview, update Brother's own print status, or guarantee a successful print.
@@ -34,6 +36,8 @@ The readiness check reports the printer's IPP state and whether it accepts jobs.
 Under **Manage saved printer data → Advanced: record printer requests**, you can start an optional diagnostic recording, open a preview, then return to stop recording and inspect or export the results as CSV. It shows supported single-object SNMP GETs seen by the cache hook, whether the answer came from the cache or printer, the result, response value and elapsed hook time. Byte strings use Base64, which is encoding, not encryption. Recording is off by default, held in memory until the app process exits, and limited to the most recent 2,000 events. Nothing is sent automatically.
 
 CSV exports may contain printer IP addresses, identifiers and response data. Review them before sharing. The recorder does not capture discovery, other protocols, every failure or print-job data; hook times are not tap-to-preview timings. For full network investigation, use the [PCAPdroid guide](CAPTURING-PRINTER-TRAFFIC.md).
+
+The CSV includes the latest stored baseline and cache-used communication spans and request counts for each printer. These columns can be empty until the app has observed the relevant bursts.
 
 Export filenames include the local date and time. **How to share diagnostics** explains what to review and offers separate buttons for the guide and GitHub issues; it never submits a report automatically.
 

@@ -59,6 +59,11 @@ public final class AutoCache {
             if(mac!=null && e.getValue() instanceof String)edit.putString("identity|"+mac+"|"+e.getKey().substring(prefix.length()),(String)e.getValue());
             edit.remove(e.getKey());
         }
+        String timingPrefix="timing|"+ip+"|";
+        for(Map.Entry<String,?> e:p.getAll().entrySet())if(mac!=null&&e.getKey().startsWith(timingPrefix)){
+            if(e.getValue() instanceof String)edit.putString("timing-identity|"+mac+"|"+e.getKey().substring(timingPrefix.length()),(String)e.getValue());
+            edit.remove(e.getKey());
+        }
         edit.remove("mac|"+ip).remove("status|"+ip).apply();VERIFIED.remove(ip);
     }
     private static synchronized void acceptIdentity(String ip,String mac){
@@ -68,13 +73,18 @@ public final class AutoCache {
         String last=p.getString("last|"+mac,null);boolean moved=false;
         for(Map.Entry<String,?> entry:p.getAll().entrySet()){
             String k=entry.getKey();if(!k.startsWith("mac|")||!mac.equals(entry.getValue()))continue;
-            String old=k.substring(4);if(!old.equals(ip)){moved=true;archiveAddress(p,old,mac);}
+            String old=k.substring(4);if(!old.equals(ip)){moved=true;CommunicationTiming.discard(old);archiveAddress(p,old,mac);}
         }
         SharedPreferences.Editor edit=p.edit();String prefix="identity|"+mac+"|";
         for(Map.Entry<String,?> entry:p.getAll().entrySet())if(entry.getKey().startsWith(prefix)&&entry.getValue() instanceof String){
             String dest=key(ip,entry.getKey().substring(prefix.length()));
             if(!p.getAll().containsKey(dest))edit.putString(dest,(String)entry.getValue());
             edit.remove(entry.getKey());
+        }
+        String timingPrefix="timing-identity|"+mac+"|";
+        for(Map.Entry<String,?> entry:p.getAll().entrySet())if(entry.getKey().startsWith(timingPrefix)&&entry.getValue() instanceof String){
+            String dest="timing|"+ip+"|"+entry.getKey().substring(timingPrefix.length());
+            if(!p.getAll().containsKey(dest)||(previous==null&&(moved||(last!=null&&!last.equals(ip)))))edit.putString(dest,(String)entry.getValue());edit.remove(entry.getKey());
         }
         LinkedHashMap<String,String> pending=PENDING_LIVE.remove(ip);
         if(pending!=null)for(Map.Entry<String,String> entry:pending.entrySet())edit.putString(key(ip,entry.getKey()),entry.getValue());
@@ -105,6 +115,20 @@ public final class AutoCache {
     public static boolean liveCheckEnabled(){SharedPreferences p=prefs;return p!=null && p.getBoolean("live_check",false);}
     public static void setLiveCheckEnabled(boolean value){SharedPreferences p=prefs;if(p!=null)p.edit().putBoolean("live_check",value).apply();}
     public static String readString(String key,String fallback){SharedPreferences p=prefs;return p==null?fallback:p.getString(key,fallback);}
+    public static synchronized void saveTiming(String ip,long span,int live,int cached){
+        SharedPreferences p=prefs;if(p==null||ip==null||live+cached==0)return;
+        String kind=cached==0?"baseline":"cached",key="timing|"+ip+"|"+kind;
+        if(cached==0&&p.getString(key,null)!=null)return;
+        p.edit().putString(key,span+"|"+live+"|"+cached+"|"+System.currentTimeMillis()).apply();
+    }
+    public static String timingValue(String ip,String kind){SharedPreferences p=prefs;if(p==null)return "";String v=p.getString("timing|"+ip+"|"+kind,"");String[] a=v.split("\\|");return a.length==4?a[0]:"";}
+    public static String timingRequestCount(String ip,String kind){SharedPreferences p=prefs;if(p==null)return "";try{String[] a=p.getString("timing|"+ip+"|"+kind,"").split("\\|");return Integer.toString(Integer.parseInt(a[1])+Integer.parseInt(a[2]));}catch(Exception ignored){return "";}}
+    private static String timingLine(String label,String value){
+        if(value==null||value.isEmpty())return label+": Not recorded";
+        try{String[] a=value.split("\\|");long ms=Long.parseLong(a[0]);int live=Integer.parseInt(a[1]),cached=Integer.parseInt(a[2]);return String.format(java.util.Locale.ROOT,"%s: %.2f s · %d requests (%d cached)",label,ms/1000.0,live+cached,cached);}catch(Exception ignored){return label+": Not recorded";}
+    }
+    public static String timingSummary(String ip){SharedPreferences p=prefs;if(p==null)return "Without cache: Not recorded\nWith cache: Not recorded";return timingLine("Without cache",p.getString("timing|"+ip+"|baseline",""))+"\n"+timingLine("With cache",p.getString("timing|"+ip+"|cached",""));}
+    public static synchronized void clearTimings(String ip){SharedPreferences p=prefs;if(p==null||ip==null)return;String mac=p.getString("mac|"+ip,null);SharedPreferences.Editor e=p.edit().remove("timing|"+ip+"|baseline").remove("timing|"+ip+"|cached");if(mac!=null){e.remove("timing-identity|"+mac+"|baseline").remove("timing-identity|"+mac+"|cached");}e.apply();CommunicationTiming.discard(ip);}
     public static String printerName(String ip){
         SharedPreferences p=prefs;if(p==null||ip==null)return "Saved printer";
         for(String id:new String[]{"1.3.6.1.2.1.25.3.2.1.3.1","1.3.6.1.2.1.1.1.0"}){
@@ -124,9 +148,9 @@ public final class AutoCache {
     public static synchronized void clearPrinter(String ip){
         SharedPreferences p=prefs;if(p==null||ip==null)return;SharedPreferences.Editor e=p.edit();
         String mac=p.getString("mac|"+ip,null);
-        for(String k:p.getAll().keySet())if(k.startsWith("entry|"+ip+"|")||k.equals("mac|"+ip)||k.equals("status|"+ip)||(mac!=null&&(k.startsWith("identity|"+mac+"|")||k.equals("last|"+mac)||k.equals("dynamic|"+mac))))e.remove(k);e.apply();VERIFIED.remove(ip);PENDING_LIVE.remove(ip);
+        for(String k:p.getAll().keySet())if(k.startsWith("entry|"+ip+"|")||k.startsWith("timing|"+ip+"|")||k.equals("mac|"+ip)||k.equals("status|"+ip)||(mac!=null&&(k.startsWith("identity|"+mac+"|")||k.startsWith("timing-identity|"+mac+"|")||k.equals("last|"+mac)||k.equals("dynamic|"+mac))))e.remove(k);e.apply();VERIFIED.remove(ip);PENDING_LIVE.remove(ip);CommunicationTiming.discard(ip);
     }
-    public static synchronized void clearAll(){SharedPreferences p=prefs;if(p==null)return;SharedPreferences.Editor e=p.edit();for(String k:p.getAll().keySet())if(k.startsWith("entry|")||k.startsWith("mac|")||k.startsWith("status|")||k.startsWith("identity|")||k.startsWith("last|")||k.startsWith("dynamic|"))e.remove(k);e.apply();VERIFIED.clear();PENDING_LIVE.clear();}
+    public static synchronized void clearAll(){SharedPreferences p=prefs;if(p==null)return;SharedPreferences.Editor e=p.edit();for(String k:p.getAll().keySet())if(k.startsWith("entry|")||k.startsWith("mac|")||k.startsWith("status|")||k.startsWith("identity|")||k.startsWith("last|")||k.startsWith("dynamic|")||k.startsWith("timing|")||k.startsWith("timing-identity|"))e.remove(k);e.apply();VERIFIED.clear();PENDING_LIVE.clear();CommunicationTiming.discardAll();}
     private static void stageLive(String ip,String oid,String value){
         LinkedHashMap<String,String> pending=PENDING_LIVE.get(ip);
         if(pending==null){if(PENDING_LIVE.size()>=8)PENDING_LIVE.remove(PENDING_LIVE.keySet().iterator().next());pending=new LinkedHashMap<>();PENDING_LIVE.put(ip,pending);}
@@ -136,6 +160,7 @@ public final class AutoCache {
         try{
             Diagnostics.abandon();
             String ip=address(socket),id=oid(request);if(ip==null||id==null)return null;
+            CommunicationTiming.request(ip);
             Diagnostics.begin(ip,id);
             Readiness.maybeCheck(ip);if(!enabled())return null;
             if(id.equals(MAC_OID)){VERIFIED.remove(ip);return null;}
@@ -144,18 +169,19 @@ public final class AutoCache {
             String[] parts=saved.split(":",2);ClassLoader loader=request.getClass().getClassLoader();
             Class<?> resultClass=loader.loadClass(SNMP+"SnmpResult");Object result=resultClass.getConstructor().newInstance();
             if(parts[0].equals("missing")){
-                Class<?> state=loader.loadClass(SNMP+"SnmpResult$SnmpState");resultClass.getField("state").set(result,state.getField("ErrorRequestNoSuchName").get(null));diagnosticResult("cache",result);return result;
+                Class<?> state=loader.loadClass(SNMP+"SnmpResult$SnmpState");resultClass.getField("state").set(result,state.getField("ErrorRequestNoSuchName").get(null));CommunicationTiming.cacheHit(ip);diagnosticResult("cache",result);return result;
             }
             if(parts.length!=2)return null;Class<?> asn=loader.loadClass(WEST+"AsnObject"),vb=loader.loadClass(WEST+"Varbind");Object value;
             if(parts[0].equals("octets"))value=loader.loadClass(WEST+"AsnOctets").getConstructor(byte[].class).newInstance((Object)Base64.decode(parts[1],Base64.DEFAULT));
             else if(parts[0].equals("integer"))value=loader.loadClass(WEST+"AsnInteger").getConstructor(int.class).newInstance(Integer.parseInt(parts[1]));
             else return null;
-            Object bind=vb.getConstructor(String.class,asn).newInstance(id,value);Object array=Array.newInstance(vb,1);Array.set(array,0,bind);resultClass.getField("results").set(result,array);diagnosticResult("cache",result);return result;
+            Object bind=vb.getConstructor(String.class,asn).newInstance(id,value);Object array=Array.newInstance(vb,1);Array.set(array,0,bind);resultClass.getField("results").set(result,array);CommunicationTiming.cacheHit(ip);diagnosticResult("cache",result);return result;
         }catch(Exception|LinkageError ignored){return null;}
     }
     public static synchronized void record(Object socket,Object request,Object result){
         try{
             diagnosticResult("printer",result);
+            String timingIp=address(socket);if(timingIp!=null&&oid(request)!=null)CommunicationTiming.response(timingIp);
             if(!enabled()||result==null)return;String ip=address(socket),id=oid(request);if(ip==null||id==null)return;
             String state=String.valueOf(result.getClass().getField("state").get(result));String encoded;
             if(state.equals("ErrorRequestNoSuchName"))encoded="missing:";
