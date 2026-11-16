@@ -45,7 +45,7 @@ val automaticBrotherCache = patch(
         method.addInstruction(resultIndex + 1,"invoke-static {v6, p1, v2}, $AUTO->record(Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;)V")
         method.addInstructionsWithLabels(0,"""
             iget-object v0, p0, $CLIENT->mSocket:Lcom/brother/sdk/common/socket/ISocket;
-            invoke-static {v0, p1}, $AUTO->lookup(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+            invoke-static {v0, p1, p2, p3}, $AUTO->lookup(Ljava/lang/Object;Ljava/lang/Object;II)Ljava/lang/Object;
             move-result-object v0
             if-eqz v0, :original
             check-cast v0, $RESULT
@@ -60,6 +60,10 @@ val automaticBrotherCache = patch(
                 setAttribute("android:exported", "true")
             }
             manifest.elements("application").first().appendChild("activity") {
+                setAttribute("android:name", "app.template.extension.extension.ReplayDiffActivity")
+                setAttribute("android:exported", "false")
+            }
+            manifest.elements("application").first().appendChild("activity") {
                 setAttribute("android:name", "app.template.extension.extension.DiagnosticsActivity")
                 setAttribute("android:exported", "false")
             }
@@ -69,3 +73,4 @@ val automaticBrotherCache = patch(
         }
     }
 }
+

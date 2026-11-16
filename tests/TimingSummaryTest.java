@@ -2,6 +2,7 @@ import android.content.Context;
 import app.template.extension.extension.AutoCache;
 import app.template.extension.extension.Diagnostics;
 import app.template.extension.extension.CommunicationTiming;
+import app.template.extension.extension.ReplayEngine;
 
 public class TimingSummaryTest {
     static void check(boolean ok,String what){if(!ok)throw new AssertionError(what);}
@@ -43,14 +44,12 @@ public class TimingSummaryTest {
         check(card.contains("0.12 s")&&card.contains("~0.00 s avoided"),"latest live-only burst replaces cached burst");
         check(AutoCache.timingValue(complete,"latest").equals("123"),"store latest live burst");
         AutoCache.clearTimings(complete);check(AutoCache.timingValue(complete,"latest").isEmpty(),"reset clears latest measurement");
-        CommunicationTiming.startMeasurement(estimate);check(CommunicationTiming.isMeasuring(estimate),"measurement starts");
-        CommunicationTiming.request(estimate);CommunicationTiming.response(estimate);CommunicationTiming.stopMeasurement(estimate);
-        check(!CommunicationTiming.isMeasuring(estimate)&&AutoCache.timingSummary(estimate).contains("Uncached measurement"),"measurement stops and is retained");
-        check(AutoCache.uncachedMeasurementSummary(estimate).contains("Uncached test:"),"manual uncached result is available for the stop dialog");
-        check(!AutoCache.timingCardSummary(estimate).contains("Uncached test:"),"manual result does not clutter the card");
-        CommunicationTiming.startMeasurement(estimate);
-        check(!CommunicationTiming.stopMeasurement(estimate),"empty measurement must report no observed requests");
-
+        String recorded="192.0.2.15";ReplayEngine.Spec request=new ReplayEngine.Spec("1.2.3","public",0,1,161,1000,1);
+        CommunicationTiming.request(recorded);CommunicationTiming.capture(recorded,request);CommunicationTiming.request(recorded);CommunicationTiming.capture(recorded,request);CommunicationTiming.finishAll();
+        check(CommunicationTiming.replaySequence(recorded).size()==2,"capture repeated requests in order");
+        CommunicationTiming.request(recorded);CommunicationTiming.capture(recorded,null);CommunicationTiming.finishAll();check(CommunicationTiming.replaySequence(recorded)==null,"incomplete burst is not replayed");
+        for(int i=0;i<4097;i++){CommunicationTiming.request(recorded);CommunicationTiming.capture(recorded,request);}CommunicationTiming.finishAll();
+        check(CommunicationTiming.replaySequence(recorded)==null,"oversized burst is never silently truncated");
         String auto="192.0.2.11";CommunicationTiming.request(auto);CommunicationTiming.response(auto);Thread.sleep(3400);check(!AutoCache.timingValue(auto,"baseline").isEmpty(),"timing saves automatically after quiet period");
         AutoCache.clearAll();check(AutoCache.timingSummary(ip).contains("Not recorded"),"clearing removes timing summaries");
         System.out.println("Communication timing summary checks passed");

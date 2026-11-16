@@ -185,15 +185,19 @@ public final class AutoCache {
         if(pending==null){if(PENDING_LIVE.size()>=8)PENDING_LIVE.remove(PENDING_LIVE.keySet().iterator().next());pending=new LinkedHashMap<>();PENDING_LIVE.put(ip,pending);}
         if(!pending.containsKey(oid)&&pending.size()>=128)pending.remove(pending.keySet().iterator().next());pending.put(oid,value);
     }
-    public static synchronized Object lookup(Object socket,Object request){
+    public static synchronized Map<String,String> replaySnapshot(String ip,java.util.List<ReplayEngine.Spec> specs){Map<String,String> snapshot=new LinkedHashMap<>();SharedPreferences p=prefs;if(p==null)return snapshot;for(ReplayEngine.Spec spec:specs){String saved=p.getString(key(ip,spec.oid),null);if(saved!=null)snapshot.put(spec.oid,saved);}return snapshot;}
+    public static Object lookup(Object socket,Object request){return lookup(socket,request,1000,1);}
+    public static synchronized Object lookup(Object socket,Object request,int timeout,int retries){
+        if(ReplayTransport.isReplayThread())return null;
         try{
             Diagnostics.abandon();
             REQUEST_EPOCH.remove();REQUEST_START.remove();
             String ip=address(socket),id=oid(request);if(ip==null||id==null)return null;
             REQUEST_EPOCH.set(cacheEpoch);REQUEST_START.set(System.nanoTime());
             CommunicationTiming.request(ip);
+            try{String community=(String)field(request,"community");int version=(Integer)field(request,"version"),requestId=(Integer)field(request,"req_id"),port=(Integer)field(socket,"mPort");if(community==null||port<1||port>65535||timeout<0||retries<1)CommunicationTiming.capture(ip,null);else CommunicationTiming.capture(ip,new ReplayEngine.Spec(id,community,version,requestId,port,timeout,retries));}catch(Exception ignored){CommunicationTiming.capture(ip,null);}
             Diagnostics.begin(ip,id);
-            if(!enabled()||CommunicationTiming.isMeasuring(ip))return null;
+            if(!enabled())return null;
             if(id.equals(MAC_OID)){VERIFIED.remove(ip);return null;}
             if(!isVerified(ip))return null;
             String saved=prefs.getString(key(ip,id),null);if(saved==null)return null;
@@ -210,6 +214,7 @@ public final class AutoCache {
         }catch(Exception|LinkageError ignored){return null;}
     }
     public static synchronized void record(Object socket,Object request,Object result){
+        if(ReplayTransport.isReplayThread())return;
         try{
             diagnosticResult("printer",result);
             Long requestEpoch=REQUEST_EPOCH.get();REQUEST_EPOCH.remove();Long started=REQUEST_START.get();REQUEST_START.remove();if(requestEpoch!=null&&requestEpoch.longValue()!=cacheEpoch)return;

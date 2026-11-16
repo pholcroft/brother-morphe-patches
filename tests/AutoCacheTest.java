@@ -7,7 +7,6 @@ import com.brother.sdk.common.socket.devicemanagement.snmp.SnmpResult;
 import com.brother.sdk.common.socket.devicemanagement.snmp.westhawk.*;
 import app.template.extension.extension.AutoCache;
 import app.template.extension.extension.Diagnostics;
-import app.template.extension.extension.CommunicationTiming;
 
 public class AutoCacheTest {
     static void check(boolean x,String label){if(!x)throw new AssertionError(label);}
@@ -25,12 +24,6 @@ public class AutoCacheTest {
         AutoCache.record(first,request,success(oid,new AsnOctets(new byte[]{0,1,-1})));
         SnmpResult saved=(SnmpResult)AutoCache.lookup(first,request);
         check(Arrays.equals(saved.results[0].getValue().bytes,new byte[]{0,1,-1}),"octets changed");
-        CommunicationTiming.startMeasurement("192.0.2.1");
-        check(AutoCache.lookup(first,request)==null,"measurement must bypass cached responses");
-        AutoCache.record(first,request,success(oid,new AsnOctets(new byte[]{0,1,-1})));
-        CommunicationTiming.stopMeasurement("192.0.2.1");
-        check(AutoCache.lookup(first,request)!=null,"cache resumes after measurement");
-        check(AutoCache.timingSummary("192.0.2.1").contains("Uncached measurement"),"measurement displayed");
         check(AutoCache.lookup(second,request)==null,"printer isolation");
         AutoCache.record(first,new SnmpRequest(num,-96),success(num,new AsnInteger(-9)));
         saved=(SnmpResult)AutoCache.lookup(first,new SnmpRequest(num,-96));

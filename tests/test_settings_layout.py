@@ -41,7 +41,9 @@ assert 'â€' not in settings, 'navigation labels contain mojibake'
 assert 'Timing details and help' not in settings
 
 assert "Reset timing comparison" not in settings
-assert "Uncached test result" in settings
+assert "Uncached replay result" in settings
+assert "Stop uncached measurement" not in settings
+assert "View differences" in settings
 
 assert 'menu.getMenu().add("What is this fix?")' not in settings
 assert 'infoTouch.setContentDescription("What is this fix?")' in settings
@@ -55,4 +57,8 @@ integration = source.read_text(encoding="utf-8")
 assert "Check printer readiness" not in integration
 cache = (root / "extensions/extension/src/main/java/app/template/extension/extension/AutoCache.java").read_text(encoding="utf-8")
 assert "Readiness.maybeCheck" not in cache
+
+patch = (root / "patches/src/main/kotlin/app/template/patches/brother/AutomaticCachePatch.kt").read_text(encoding="utf-8")
+assert "ReplayDiffActivity" in patch
+assert "lookup(Ljava/lang/Object;Ljava/lang/Object;II)" in patch
 
