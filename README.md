@@ -29,7 +29,7 @@ Clearing removes the saved responses and communication comparison times; it does
 
 Each printer card shows the latest observed SNMP activity burst, an estimated total request time without the cache, and estimated request time avoided. The estimates add individual observed or expected live request times: they are not elapsed preview times, because requests can overlap, printer times vary and cache overhead is ignored. Unmatched requests produce a partial or unavailable estimate. Three seconds without observed requests separates bursts, so a single preview or background polling may create multiple bursts. The diagnostic CSV includes request counts and estimate components. To measure live traffic for a printer, choose **Measure without cache**, open a preview, then return and choose **Stop uncached measurement**. When you stop, the app shows the **Uncached test** result in a dialog, separate from the latest normal activity and its estimates. If no requests are observed, the app says so and keeps any previous result. Other printer activity can be included; if the service stops, the running measurement ends. Timings are recorded automatically and clearing saved printer data resets them.
 
-The settings controls require patch bundle **1.3.2 or later**. An earlier layout bug could prevent them appearing; refresh the Morphe source and repatch the original APK to update an older installation.
+If the settings controls do not appear, refresh the Morphe source and repatch the original APK. Version numbers were reset from 1.5.x to 0.2.x while the project remains experimental.
 
 ### Advanced diagnostics
 

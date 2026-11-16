@@ -1,7 +1,7 @@
 {
-  "created_at": "2026-11-16T08:47:51",
+  "created_at": "2026-11-16T09:08:51",
   "description": "Remove the optional background printer readiness check.",
-  "download_url": "https://raw.githubusercontent.com/pholcroft/brother-morphe-patches/dev/patches-1.5.2-dev.4.mpp",
-  "version": "1.5.2-dev.4"
+  "download_url": "https://raw.githubusercontent.com/pholcroft/brother-morphe-patches/dev/patches-0.2.1-dev.1.mpp",
+  "version": "0.2.1-dev.1"
 }
 
