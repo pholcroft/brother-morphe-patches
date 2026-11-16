@@ -15,7 +15,7 @@ public class TimingSummaryTest {
         CommunicationTiming.request(ip);CommunicationTiming.cacheHit(ip);Diagnostics.finish("cache","SuccessRequest","integer","1");
         CommunicationTiming.request(ip);CommunicationTiming.response(ip);CommunicationTiming.finishAll();Diagnostics.stop();
         String summary=AutoCache.timingSummary(ip);check(summary.contains("Latest activity")&&!AutoCache.timingValue(ip,"cached").isEmpty()&&AutoCache.timingRequestCount(ip,"cached").equals("2"),"store baseline and mixed cache burst");
-        String csv=Diagnostics.csv();check(csv.contains("latest_span_ms")&&csv.contains("latest_matched_hits"),"export latest estimate components");check(csv.contains("baseline_span_ms")&&csv.contains("cached_span_ms")&&csv.contains(","+AutoCache.timingValue(ip,"baseline")+",1,"+AutoCache.timingValue(ip,"cached")+",2"),"include recorded timings and counts in export");
+        String csv=Diagnostics.csv();check(csv.contains("burst_sequence")&&!csv.contains("latest_span_ms"),"diagnostics must not join each row to an unrelated latest burst");
         AutoCache.clearTimings(ip);check(AutoCache.timingValue(ip,"baseline").isEmpty()&&AutoCache.timingValue(ip,"cached").isEmpty(),"reset timings separately");
         String mixed="192.0.2.12";
         CommunicationTiming.request(mixed);CommunicationTiming.response(mixed);
@@ -45,10 +45,10 @@ public class TimingSummaryTest {
         check(AutoCache.timingValue(complete,"latest").equals("123"),"store latest live burst");
         AutoCache.clearTimings(complete);check(AutoCache.timingValue(complete,"latest").isEmpty(),"reset clears latest measurement");
         String recorded="192.0.2.15";ReplayEngine.Spec request=new ReplayEngine.Spec("1.2.3","public",0,1,161,1000,1);
-        CommunicationTiming.request(recorded);CommunicationTiming.capture(recorded,request);CommunicationTiming.request(recorded);CommunicationTiming.capture(recorded,request);CommunicationTiming.finishAll();
+        CommunicationTiming.request(recorded);CommunicationTiming.finishCapture(CommunicationTiming.capture(recorded,request));CommunicationTiming.request(recorded);CommunicationTiming.finishCapture(CommunicationTiming.capture(recorded,request));CommunicationTiming.finishAll();
         check(CommunicationTiming.replaySequence(recorded).size()==2,"capture repeated requests in order");
-        CommunicationTiming.request(recorded);CommunicationTiming.capture(recorded,null);CommunicationTiming.finishAll();check(CommunicationTiming.replaySequence(recorded)==null,"incomplete burst is not replayed");
-        for(int i=0;i<4097;i++){CommunicationTiming.request(recorded);CommunicationTiming.capture(recorded,request);}CommunicationTiming.finishAll();
+        CommunicationTiming.request(recorded);CommunicationTiming.finishCapture(CommunicationTiming.capture(recorded,null));CommunicationTiming.finishAll();check(CommunicationTiming.replaySequence(recorded)==null,"incomplete burst is not replayed");
+        for(int i=0;i<4097;i++){CommunicationTiming.request(recorded);CommunicationTiming.finishCapture(CommunicationTiming.capture(recorded,request));}CommunicationTiming.finishAll();
         check(CommunicationTiming.replaySequence(recorded)==null,"oversized burst is never silently truncated");
         String auto="192.0.2.11";CommunicationTiming.request(auto);CommunicationTiming.response(auto);Thread.sleep(3400);check(!AutoCache.timingValue(auto,"baseline").isEmpty(),"timing saves automatically after quiet period");
         AutoCache.clearAll();check(AutoCache.timingSummary(ip).contains("Not recorded"),"clearing removes timing summaries");

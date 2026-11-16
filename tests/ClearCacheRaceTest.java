@@ -28,6 +28,15 @@ public class ClearCacheRaceTest {
         Thread worker=new Thread(()->{try{AutoCache.lookup(s,req(MAC));sent.countDown();cleared.await();AutoCache.record(s,req(MAC),value(MAC,IDENT));}catch(Exception e){throw new RuntimeException(e);}});
         worker.start();sent.await();AutoCache.clearAll();cleared.countDown();worker.join();
         check(AutoCache.printers().isEmpty(),"clear from another thread must invalidate an in-flight response");
+        AutoCache.lookup(s,req(MAC));AutoCache.record(s,req(MAC),null);AutoCache.clearAll();AutoCache.record(s,req(MAC),value(MAC,IDENT));
+        check(AutoCache.printers().isEmpty(),"a failed decode followed by clear must not lose the request epoch");
+        BrDatagramSocket otherPrinter=new BrDatagramSocket(InetAddress.getByName("192.0.2.71"));
+        AutoCache.lookup(otherPrinter,req(MAC));AutoCache.record(otherPrinter,req(MAC),value(MAC,new byte[]{2,1,2,3,4,6}));String otherOid="1.3.6.1.2.1.1.3.0";
+        AutoCache.lookup(otherPrinter,req(otherOid));AutoCache.clearPrinter("192.0.2.70");AutoCache.record(otherPrinter,req(otherOid),value(otherOid,new byte[]{68}));
+        check(AutoCache.lookup(otherPrinter,req(otherOid))!=null,"clearing one printer must not drop another printer's in-flight response");
+        long generation=AutoCache.generation();AutoCache.clearAll();
+        AutoCache.saveTimingIfCurrent("192.0.2.70",123,1,0,0,0,120,1,generation);
+        check(AutoCache.timingValue("192.0.2.70","latest").isEmpty(),"a delayed completed timing cannot reappear after clear");
         System.out.println("Clear cache and in-flight response checks passed");
     }
 }

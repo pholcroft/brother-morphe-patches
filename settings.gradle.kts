@@ -1,6 +1,7 @@
 rootProject.name = "morphe-patches-template"
 
 pluginManagement {
+    if (file("../morphe-gradle-plugin").exists()) includeBuild("../morphe-gradle-plugin")
     repositories {
         gradlePluginPortal()
         google()
@@ -19,4 +20,6 @@ pluginManagement {
 plugins {
     id("app.morphe.patches") version "2.1.0"
 }
+
+if (file("../morphe-patcher").exists()) includeBuild("../morphe-patcher")
 

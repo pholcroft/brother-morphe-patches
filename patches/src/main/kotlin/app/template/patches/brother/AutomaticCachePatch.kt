@@ -11,7 +11,12 @@ import app.morphe.patcher.patch.AppTarget
 import app.morphe.patcher.patch.Compatibility
 import app.morphe.patcher.patch.patch
 import app.morphe.patcher.patch.resourceXml
+import app.morphe.patcher.patch.mutableClassDefBy
+import app.morphe.patcher.util.proxy.mutableTypes.MutableMethod.Companion.toMutable
 import com.android.tools.smali.dexlib2.iface.instruction.OneRegisterInstruction
+import com.android.tools.smali.dexlib2.builder.MutableMethodImplementation
+import com.android.tools.smali.dexlib2.immutable.ImmutableMethod
+import com.android.tools.smali.dexlib2.immutable.ImmutableMethodParameter
 
 private const val CLIENT = "Lcom/brother/sdk/common/socket/devicemanagement/snmp/SnmpClient;"
 private const val REQUEST = "Lcom/brother/sdk/common/socket/devicemanagement/snmp/SnmpRequest;"
@@ -53,6 +58,27 @@ val automaticBrotherCache = patch(
             :original
             nop
         """)
+        // A wrapper provides a finally path for unchecked exceptions as well as
+        // SDK timeouts, without changing the SDK's existing exception handlers.
+        val clientClass=mutableClassDefBy(CLIENT)
+        val alias="morpheOriginalRequestGet"
+        require(clientClass.methods.none { it.name == alias }) { "SNMP wrapper already exists" }
+        clientClass.methods.remove(method)
+        method.setName(alias)
+        clientClass.methods.add(method)
+        val wrapper=ImmutableMethod(CLIENT,"requestGet",listOf(REQUEST,"I","I").map { ImmutableMethodParameter(it,null,null) },RESULT,
+            method.accessFlags,null,null,MutableMethodImplementation(6)).toMutable()
+        wrapper.addInstructionsWithLabels(0,"""
+            invoke-virtual {p0, p1, p2, p3}, $CLIENT->$alias(${REQUEST}II)$RESULT
+            move-result-object v0
+            invoke-static {}, $AUTO->finishRequest()V
+            return-object v0
+            move-exception v1
+            invoke-static {}, $AUTO->finishRequest()V
+            throw v1
+        """)
+        wrapper.implementation!!.apply { addCatch(newLabelForIndex(0),newLabelForIndex(2),newLabelForIndex(4)) }
+        clientClass.methods.add(wrapper)
         resourceXml("AndroidManifest.xml").use { manifest ->
             require(manifest.elements("activity").none { it.attribute("android:name") == ACTIVITY })
             manifest.elements("application").first().appendChild("activity") {
@@ -65,6 +91,10 @@ val automaticBrotherCache = patch(
             }
             manifest.elements("application").first().appendChild("activity") {
                 setAttribute("android:name", "app.template.extension.extension.DiagnosticsActivity")
+                setAttribute("android:exported", "false")
+            }
+            manifest.elements("application").first().appendChild("activity") {
+                setAttribute("android:name", "app.template.extension.extension.ActivityHistoryActivity")
                 setAttribute("android:exported", "false")
             }
         }

@@ -55,6 +55,7 @@ public final class CacheSettingsActivity extends Activity {
     private ProgressDialog replayProgress;private AlertDialog replayResult;private boolean replayVisible;
     private final Handler replayHandler=new Handler(Looper.getMainLooper());
     private final ReplayController.Listener replayListener=()->replayHandler.post(this::showReplayState);
+    private final Runnable historyListener=()->replayHandler.post(()->{if(replayVisible&&!isFinishing()&&!isDestroyed())render();});
 
     private int dp(float value){return (int)(value*getResources().getDisplayMetrics().density+0.5f);}
 
@@ -64,20 +65,19 @@ public final class CacheSettingsActivity extends Activity {
 
     @Override public void onCreate(Bundle state){super.onCreate(state);AutoCache.init(getApplicationContext());render();}
 
-    @Override public void onResume(){super.onResume();replayVisible=true;ReplayController.attach(replayListener);if(root!=null)render();showReplayState();}
-    @Override public void onPause(){replayVisible=false;ReplayController.detach(replayListener);if(replayProgress!=null){replayProgress.dismiss();replayProgress=null;}if(replayResult!=null){replayResult.dismiss();replayResult=null;}super.onPause();}
+    @Override public void onResume(){super.onResume();replayVisible=true;ReplayController.attach(replayListener);HistoryRuntime.addListener(historyListener);if(root!=null)render();showReplayState();}
+    @Override public void onPause(){replayVisible=false;ReplayController.detach(replayListener);HistoryRuntime.removeListener(historyListener);if(replayProgress!=null){replayProgress.dismiss();replayProgress=null;}if(replayResult!=null){replayResult.dismiss();replayResult=null;}super.onPause();}
 
-    private void clearPrinter(String ip){new AlertDialog.Builder(this).setTitle("Clear saved printer data?").setMessage("Saved responses and comparison times will be removed. With the cache on, new replies are learned immediately and may be reused during the same preview. Turn the cache off in settings to use only live replies.\n\nExisting diagnostic recordings are kept separately.").setNegativeButton("Cancel",null).setPositiveButton("Clear",(d,w)->{AutoCache.clearPrinter(ip);render();}).show();}
+    private void clearPrinter(String ip){new AlertDialog.Builder(this).setTitle("Clear saved printer data?").setMessage("Saved responses and comparison times will be removed. With the cache on, new replies are learned immediately and may be reused during the same preview. Turn the cache off in settings to use only live replies.\n\nExisting diagnostic recordings are kept separately.").setNegativeButton("Cancel",null).setPositiveButton("Clear",(d,w)->{if(!AutoCache.clearPrinter(ip))showClearFailure();render();}).show();}
 
-    private void clearAll(){new AlertDialog.Builder(this).setTitle("Clear all saved printers?").setMessage("Saved responses and comparison times will be removed. With the cache on, new replies are learned immediately and may be reused during the same preview. Turn the cache off in settings to use only live replies.\n\nExisting diagnostic recordings are kept separately.").setNegativeButton("Cancel",null).setPositiveButton("Clear all",(d,w)->{AutoCache.clearAll();render();}).show();}
+    private void clearAll(){new AlertDialog.Builder(this).setTitle("Clear all saved printers?").setMessage("Saved responses and comparison times will be removed. With the cache on, new replies are learned immediately and may be reused during the same preview. Turn the cache off in settings to use only live replies.\n\nExisting diagnostic recordings are kept separately.").setNegativeButton("Cancel",null).setPositiveButton("Clear all",(d,w)->{if(!AutoCache.clearAll())showClearFailure();render();}).show();}
+    private void showClearFailure(){new AlertDialog.Builder(this).setTitle("Unable to clear saved data").setMessage("Please try again.").setPositiveButton("OK",null).show();}
 
     private void openFixExplanation(){try{startActivity(new Intent(Intent.ACTION_VIEW,Uri.parse("https://github.com/pholcroft/brother-morphe-patches#how-it-works-and-limitations")));}catch(ActivityNotFoundException e){new AlertDialog.Builder(this).setTitle("Unable to open link").setMessage("No app is available to open the GitHub page.").setPositiveButton("OK",null).show();}}
-    private void replay(String ip){
+    private void replay(ActivityBurst burst){
         if(ReplayController.isRunning()){showReplayState();return;}
-        java.util.List<ReplayEngine.Spec> specs=CommunicationTiming.replaySequence(ip);
-        if(specs==null||specs.isEmpty()){new AlertDialog.Builder(this).setTitle("No complete activity recorded").setMessage("Open a print preview and wait for the options to load, then try again. The latest activity is kept while the print service is running.").setPositiveButton("OK",null).show();return;}
-        String mac=AutoCache.readString("mac|"+ip,"");if(mac.isEmpty()){new AlertDialog.Builder(this).setTitle("Printer identity unavailable").setMessage("The printer's hardware address has not been saved. Open a print preview and try again. No requests were replayed.").setPositiveButton("OK",null).show();return;}
-        ReplayController.start(ip,specs,AutoCache.replaySnapshot(ip,specs),mac);showReplayState();
+        if(burst==null||!burst.coverage.requestsComplete){new AlertDialog.Builder(this).setTitle("No complete activity recorded").setMessage("Open a print preview and wait for the options to load, then try again.").setPositiveButton("OK",null).show();return;}
+        HistoryRuntime.startReplay(burst.ref,error->replayHandler.post(()->{if(isFinishing()||isDestroyed())return;if(error!=null)new AlertDialog.Builder(this).setTitle("Unable to replay").setMessage(error).setPositiveButton("OK",null).show();else showReplayState();}));
     }
     private void showReplayState(){
         if(!replayVisible||isFinishing()||isDestroyed())return;
@@ -88,10 +88,10 @@ public final class CacheSettingsActivity extends Activity {
         ReplayController.Outcome outcome=ReplayController.peekOutcome();if(outcome==null||replayResult!=null)return;
         AlertDialog.Builder dialog=new AlertDialog.Builder(this).setCancelable(false);
         if(outcome.error!=null)dialog.setTitle("Unable to replay").setMessage(outcome.error);
-        else{ReplayEngine.Result result=outcome.result;String summary=String.format(java.util.Locale.ROOT,"Replay time: %.2f s\nRequests replayed: %d\nChanged objects: %d",result.elapsedMs/1000.0,result.completed,result.changes.size());int routine=0;for(ReplayEngine.Change c:result.changes)if(ReplayEngine.isRoutine(c.oid))routine++;if(routine>0)summary+="\nIncludes "+routine+" normally changing uptime value(s)";if(result.uncached>0||result.unsupported>0)summary+="\nNot compared: "+(result.uncached+result.unsupported)+" requests without comparable cached values";summary+="\n\nSingle-object SNMP requests were replayed in the order observed by the service. The identity check is excluded from the time. Cached data was not changed.";dialog.setTitle("Uncached replay result").setMessage(summary);if(!result.changes.isEmpty())dialog.setNeutralButton("View differences",(d,w)->{ReplayController.clearOutcome(outcome);replayResult=null;ReplayDiffActivity.setChanges(result.changes);startActivity(new Intent(this,ReplayDiffActivity.class));});}
+        else{ReplayEngine.Result result=outcome.result;String summary=(outcome.sequence>0?"Burst #"+outcome.sequence+"\n":"")+String.format(java.util.Locale.ROOT,"Replay time: %.2f s\nRequests replayed: %d\nChanged responses: %d",result.elapsedMs/1000.0,result.completed,result.changes.size());int routine=0;for(ReplayEngine.Change c:result.changes)if(ReplayEngine.isRoutine(c.oid))routine++;if(routine>0)summary+="\nIncludes "+routine+" normally changing uptime value(s)";if(result.uncached>0||result.unsupported>0)summary+="\nNot compared: "+(result.uncached+result.unsupported)+" requests without comparable responses";summary+="\n\nSingle-object SNMP requests were replayed in the order observed by the service. The identity check is excluded from the time. Cached data was not changed.";dialog.setTitle("Uncached replay result").setMessage(summary);if(!result.changes.isEmpty())dialog.setNeutralButton("View differences",(d,w)->{ReplayController.clearOutcome(outcome);replayResult=null;ReplayDiffActivity.setChanges(result.changes);startActivity(new Intent(this,ReplayDiffActivity.class));});}
         dialog.setPositiveButton("Close",(d,w)->{ReplayController.clearOutcome(outcome);replayResult=null;});replayResult=dialog.create();replayResult.show();
     }
-    private void printerMenu(View anchor,String ip){
+    private void printerMenu(View anchor,String ip,ActivityBurst burst){
 
         PopupMenu menu=new PopupMenu(this,anchor);
 
@@ -100,6 +100,7 @@ public final class CacheSettingsActivity extends Activity {
 
 
         menu.getMenu().add("Measure without cache");
+        menu.getMenu().add("Activity history");
 
 
         menu.getMenu().add("Clear saved data");
@@ -108,7 +109,8 @@ public final class CacheSettingsActivity extends Activity {
 
             if(item.getTitle().equals("Printer details")){String mac=AutoCache.readString("mac|"+ip,"");new AlertDialog.Builder(this).setTitle("Printer details").setMessage(AutoCache.printerName(ip)+"\nAddress: "+ip+"\nHardware address: "+(mac.isEmpty()?"Not recorded":mac)+(AutoCache.hasChangedAddress(ip)?"\nThis printer has been seen at another address.":"")+"\n\nThe mod checks the hardware address when the service requests it and can reuse saved responses if the printer moves to a new IP address. If the address cannot be checked, normal printer requests are used.").setPositiveButton("Close",null).show();return true;}
 
-            if(item.getTitle().equals("Measure without cache")){replay(ip);return true;}
+            if(item.getTitle().equals("Measure without cache")){replay(burst);return true;}
+            if(item.getTitle().equals("Activity history")){Intent intent=new Intent(this,ActivityHistoryActivity.class);intent.putExtra("printer_ip",ip);intent.putExtra("printer_mac",AutoCache.readString("mac|"+ip,""));startActivity(intent);return true;}
 
             if(item.getTitle().equals("Clear saved data")){clearPrinter(ip);return true;}
 
@@ -121,14 +123,17 @@ public final class CacheSettingsActivity extends Activity {
     }
 
     private View printerCard(String ip){
+        final ActivityBurst[] shown={null};
         LinearLayout card=new LinearLayout(this);card.setOrientation(LinearLayout.VERTICAL);card.setPadding(dp(16),dp(14),dp(8),dp(14));card.setBackground(rounded(Color.WHITE,0xffd1d5d8,10));
         LinearLayout header=new LinearLayout(this);header.setOrientation(LinearLayout.HORIZONTAL);header.setGravity(Gravity.CENTER_VERTICAL);
         LinearLayout details=new LinearLayout(this);details.setOrientation(LinearLayout.VERTICAL);
         TextView name=text(AutoCache.printerName(ip),17,TEXT);name.setTypeface(null,Typeface.BOLD);details.addView(name);
         TextView address=text(ip+(AutoCache.hasChangedAddress(ip)?" · Address changed":""),14,MUTED);address.setPadding(0,dp(5),0,0);details.addView(address);
         header.addView(details,new LinearLayout.LayoutParams(0,ViewGroup.LayoutParams.WRAP_CONTENT,1));
-        TextView menu=text("⋮",24,TEXT);menu.setGravity(Gravity.CENTER);menu.setContentDescription("Printer options for "+ip);menu.setOnClickListener(v->printerMenu(v,ip));header.addView(menu,new LinearLayout.LayoutParams(dp(48),dp(48)));card.addView(header);
-        TextView timings=text(AutoCache.timingCardSummary(ip),12,MUTED);timings.setPadding(0,dp(8),dp(8),0);card.addView(timings);timings.postDelayed(()->timings.setText(AutoCache.timingCardSummary(ip)),3500);
+        TextView menu=text("⋮",24,TEXT);menu.setGravity(Gravity.CENTER);menu.setContentDescription("Printer options for "+ip);menu.setOnClickListener(v->printerMenu(v,ip,shown[0]));header.addView(menu,new LinearLayout.LayoutParams(dp(48),dp(48)));card.addView(header);
+        TextView timings=text("Loading activity...",12,MUTED);timings.setPadding(0,dp(8),dp(8),0);card.addView(timings);
+        Runnable load=()->{long generation=AutoCache.generation();HistoryRuntime.loadLatest(ip,AutoCache.readString("mac|"+ip,""),(burst,error)->replayHandler.post(()->{if(isFinishing()||isDestroyed()||generation!=AutoCache.generation()||!timings.isAttachedToWindow())return;shown[0]=burst;timings.setText(error==null?BurstSummary.card(burst):"Activity unavailable");}));};
+        timings.post(load);timings.postDelayed(load,3500);
         return card;
     }
     private void render(){
@@ -149,6 +154,7 @@ public final class CacheSettingsActivity extends Activity {
 
         LinearLayout content=new LinearLayout(this);content.setOrientation(LinearLayout.VERTICAL);content.setPadding(dp(16),dp(24),dp(16),dp(20));scroll.addView(content,new ScrollView.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,ViewGroup.LayoutParams.WRAP_CONTENT));
 
+        if(!HistoryRuntime.isReady()&&HistoryRuntime.failure()!=null){TextView warning=text("Printer cache is temporarily unavailable. It will retry automatically.",14,MUTED);warning.setPadding(0,0,0,dp(16));content.addView(warning);}
         ArrayList<String> printers=new ArrayList<>(AutoCache.printers());Collections.sort(printers);
 
         if(printers.isEmpty()){TextView empty=text("No saved printers yet. Open a print preview to start saving responses.",15,MUTED);empty.setPadding(0,0,0,dp(16));content.addView(empty);}

@@ -4,4 +4,7 @@ extension {
 
 android {
     namespace = "app.template.extension"
+    defaultConfig {
+        testInstrumentationRunner = "app.template.extension.extension.ActivityTestRunner"
+    }
 }
