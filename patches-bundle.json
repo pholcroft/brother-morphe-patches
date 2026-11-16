@@ -1,7 +1,7 @@
 {
-  "created_at": "2026-11-15T23:08:54",
-  "description": "Add a link to the explanation of the printer preview fix.",
-  "download_url": "https://raw.githubusercontent.com/pholcroft/brother-morphe-patches/dev/patches-1.5.2-dev.2.mpp",
-  "version": "1.5.2-dev.2"
+  "created_at": "2026-11-16T07:18:51",
+  "description": "Simplify printer menu and add a small information icon.",
+  "download_url": "https://raw.githubusercontent.com/pholcroft/brother-morphe-patches/dev/patches-1.5.2-dev.3.mpp",
+  "version": "1.5.2-dev.3"
 }
 

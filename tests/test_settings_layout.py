@@ -38,12 +38,14 @@ with tempfile.TemporaryDirectory() as directory:
 # Catch mojibake in navigation symbols and preserve the details entry.
 settings = (root / 'extensions/extension/src/main/java/app/template/extension/extension/CacheSettingsActivity.java').read_text(encoding='utf-8')
 assert 'â€' not in settings, 'navigation labels contain mojibake'
-assert 'Timing details and help' in settings
+assert 'Timing details and help' not in settings
 
 assert "Reset timing comparison" not in settings
 assert "Uncached test result" in settings
 
-assert "What is this fix?" in settings
+assert 'menu.getMenu().add("What is this fix?")' not in settings
+assert 'infoTouch.setContentDescription("What is this fix?")' in settings
+assert 'infoTouch.setOnClickListener(v->openFixExplanation())' in settings
 assert "https://github.com/pholcroft/brother-morphe-patches#how-it-works-and-limitations" in settings
 assert "Intent.ACTION_VIEW" in settings
 

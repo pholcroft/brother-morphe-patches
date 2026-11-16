@@ -29,6 +29,7 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import android.widget.LinearLayout;
+import android.widget.FrameLayout;
 
 import android.widget.PopupMenu;
 
@@ -64,14 +65,13 @@ public final class CacheSettingsActivity extends Activity {
 
     private void clearAll(){new AlertDialog.Builder(this).setTitle("Clear all saved printers?").setMessage("Saved responses and comparison times will be removed. With the cache on, new replies are learned immediately and may be reused during the same preview. Turn the cache off in settings to use only live replies.\n\nExisting diagnostic recordings are kept separately.").setNegativeButton("Cancel",null).setPositiveButton("Clear all",(d,w)->{AutoCache.clearAll();render();}).show();}
 
+    private void openFixExplanation(){try{startActivity(new Intent(Intent.ACTION_VIEW,Uri.parse("https://github.com/pholcroft/brother-morphe-patches#how-it-works-and-limitations")));}catch(ActivityNotFoundException e){new AlertDialog.Builder(this).setTitle("Unable to open link").setMessage("No app is available to open the GitHub page.").setPositiveButton("OK",null).show();}}
     private void printerMenu(View anchor,String ip){
 
         PopupMenu menu=new PopupMenu(this,anchor);
 
-        menu.getMenu().add("What is this fix?");
         menu.getMenu().add("Printer details");
 
-        menu.getMenu().add("Timing details and help");
 
 
         menu.getMenu().add(CommunicationTiming.isMeasuring(ip)?"Stop uncached measurement":"Measure without cache");
@@ -82,10 +82,8 @@ public final class CacheSettingsActivity extends Activity {
 
         menu.setOnMenuItemClickListener(item->{
 
-            if(item.getTitle().equals("What is this fix?")){try{startActivity(new Intent(Intent.ACTION_VIEW,Uri.parse("https://github.com/pholcroft/brother-morphe-patches#how-it-works-and-limitations")));}catch(ActivityNotFoundException e){new AlertDialog.Builder(this).setTitle("Unable to open link").setMessage("No app is available to open the GitHub page.").setPositiveButton("OK",null).show();}return true;}
             if(item.getTitle().equals("Printer details")){String mac=AutoCache.readString("mac|"+ip,"");new AlertDialog.Builder(this).setTitle("Printer details").setMessage(AutoCache.printerName(ip)+"\nAddress: "+ip+"\nHardware address: "+(mac.isEmpty()?"Not recorded":mac)+(AutoCache.hasChangedAddress(ip)?"\nThis printer has been seen at another address.":"")+"\n\nThe mod checks the hardware address when the service requests it and can reuse saved responses if the printer moves to a new IP address. If the address cannot be checked, normal printer requests are used.").setPositiveButton("Close",null).show();return true;}
 
-            if(item.getTitle().equals("Timing details and help")){new AlertDialog.Builder(this).setTitle("Timing details and help").setMessage(AutoCache.timingSummary(ip)+"\n\nLatest activity is the most recent burst of observed SNMP activity, not a preview time. A 3-second quiet period separates activity bursts; a single preview can contain more than one burst, and background requests may be included. Previous timings stay until you clear them.\n\nEstimated avoided adds previous live durations for matching cache hits. Estimated uncached adds that figure to the observed live request durations when all requests can be accounted for. Both are sums of request times, not elapsed preview time: requests can overlap, printer response times vary, and the estimate ignores cache overhead. Partial means some cache hits could not be estimated.\n\nUse Measure without cache in the printer menu for an optional live measurement.").setPositiveButton("Close",null).show();return true;}
             if(item.getTitle().equals("Measure without cache")){new AlertDialog.Builder(this).setTitle("Measure without cache?").setMessage("Requests for this printer will go to the printer until you stop the measurement. Open your print preview, wait for the options to load, then return here and choose Stop uncached measurement. Other printer activity can also be included. Cached responses remain saved.").setNegativeButton("Cancel",null).setPositiveButton("Start",(d,w)->{CommunicationTiming.startMeasurement(ip);render();}).show();return true;}
 
             if(item.getTitle().equals("Stop uncached measurement")){boolean observed=CommunicationTiming.stopMeasurement(ip);render();if(observed)new AlertDialog.Builder(this).setTitle("Uncached test result").setMessage(AutoCache.uncachedMeasurementSummary(ip)+"\n\nTime from the first to the last observed request or response for this printer.").setPositiveButton("OK",null).show();else new AlertDialog.Builder(this).setTitle("No requests recorded").setMessage("No printer requests were observed during this measurement. Any previous uncached result has not changed. Try starting the measurement again before opening print preview.").setPositiveButton("OK",null).show();return true;}
@@ -152,7 +150,11 @@ public final class CacheSettingsActivity extends Activity {
 
         root.addView(scroll,new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,0,1));
 
-        if(!printers.isEmpty()){TextView all=text("Clear all saved printers",15,TEAL);all.setTypeface(null,Typeface.BOLD);all.setGravity(Gravity.CENTER_VERTICAL);all.setPadding(dp(24),0,dp(16),0);all.setBackgroundColor(Color.WHITE);all.setOnClickListener(v->clearAll());root.addView(all,new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,dp(56)));}
+        LinearLayout footer=new LinearLayout(this);footer.setOrientation(LinearLayout.HORIZONTAL);footer.setGravity(Gravity.CENTER_VERTICAL);footer.setBackgroundColor(Color.WHITE);
+        if(!printers.isEmpty()){TextView all=text("Clear all saved printers",15,TEAL);all.setTypeface(null,Typeface.BOLD);all.setGravity(Gravity.CENTER_VERTICAL);all.setPadding(dp(24),0,dp(8),0);all.setOnClickListener(v->clearAll());footer.addView(all,new LinearLayout.LayoutParams(0,dp(56),1));}else footer.addView(new View(this),new LinearLayout.LayoutParams(0,dp(56),1));
+        FrameLayout infoTouch=new FrameLayout(this);infoTouch.setContentDescription("What is this fix?");infoTouch.setOnClickListener(v->openFixExplanation());
+        TextView info=text("i",12,MUTED);info.setTypeface(null,Typeface.BOLD);info.setGravity(Gravity.CENTER);info.setBackground(rounded(Color.WHITE,0xff999999,20));FrameLayout.LayoutParams iconParams=new FrameLayout.LayoutParams(dp(18),dp(18),Gravity.CENTER);infoTouch.addView(info,iconParams);footer.addView(infoTouch,new LinearLayout.LayoutParams(dp(48),dp(56)));root.addView(footer);
+
 
         setContentView(root);
 
