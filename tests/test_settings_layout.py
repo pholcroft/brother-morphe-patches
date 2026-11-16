@@ -22,7 +22,7 @@ files = {
 'android/widget/TextView.java': '''package android.widget; public class TextView extends android.view.View { public TextView(android.content.Context c){} public void setText(String s){} public void setTextSize(int n){} public void setTextColor(int c){} public void setTypeface(Object f,int style){} }''',
 'android/widget/Button.java': '''package android.widget; public class Button extends TextView { public Button(android.content.Context c){super(c);} }''',
 'android/widget/Switch.java': '''package android.widget; public class Switch extends TextView { public Switch(android.content.Context c){super(c);} public void setChecked(boolean b){} public interface Listener {void onCheckedChanged(Switch b,boolean c);} public void setOnCheckedChangeListener(Listener l){} }''',
-'app/template/extension/extension/AutoCache.java': '''package app.template.extension.extension; public class AutoCache { public static void init(android.content.Context c){} public static boolean enabled(){return true;} public static boolean liveCheckEnabled(){return false;} public static void setEnabled(boolean b){} public static void setLiveCheckEnabled(boolean b){} }''',
+'app/template/extension/extension/AutoCache.java': '''package app.template.extension.extension; public class AutoCache { public static void init(android.content.Context c){} public static boolean enabled(){return true;} public static void setEnabled(boolean b){} }''',
 'app/template/extension/extension/CacheSettingsActivity.java': '''package app.template.extension.extension; public class CacheSettingsActivity {}''',
 'SettingsLayoutTest.java': '''import android.app.Activity; import android.view.View; import android.view.ViewGroup; import app.template.extension.extension.SettingsIntegration; public class SettingsLayoutTest { public static void main(String[] args) { Activity a=new Activity(); ViewGroup scroll=new ViewGroup(); ViewGroup androidXLinearLayoutCompat=new ViewGroup(); View brotherOriginal=new View(); androidXLinearLayoutCompat.addView(brotherOriginal); scroll.addView(androidXLinearLayoutCompat); a.screen=scroll; SettingsIntegration.attach(a); if(androidXLinearLayoutCompat.getChildCount()!=2 || androidXLinearLayoutCompat.getChildAt(0)!=brotherOriginal) throw new AssertionError("controls must follow Brother settings"); SettingsIntegration.attach(a); if(androidXLinearLayoutCompat.getChildCount()!=2 || androidXLinearLayoutCompat.getChildAt(0)!=brotherOriginal) throw new AssertionError("duplicate or misplaced controls on resume"); System.out.println("Settings layout checks passed"); } }''',
 }
@@ -48,4 +48,11 @@ assert 'infoTouch.setContentDescription("What is this fix?")' in settings
 assert 'infoTouch.setOnClickListener(v->openFixExplanation())' in settings
 assert "https://github.com/pholcroft/brother-morphe-patches#how-it-works-and-limitations" in settings
 assert "Intent.ACTION_VIEW" in settings
+
+assert "Refresh status" not in settings
+assert "liveCheckEnabled" not in settings
+integration = source.read_text(encoding="utf-8")
+assert "Check printer readiness" not in integration
+cache = (root / "extensions/extension/src/main/java/app/template/extension/extension/AutoCache.java").read_text(encoding="utf-8")
+assert "Readiness.maybeCheck" not in cache
 

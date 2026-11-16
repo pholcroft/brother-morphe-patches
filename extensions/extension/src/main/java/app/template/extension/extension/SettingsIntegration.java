@@ -49,11 +49,6 @@ public final class SettingsIntegration {
         cache.setChecked(AutoCache.enabled());
         cache.setOnCheckedChangeListener((button, checked) -> AutoCache.setEnabled(checked));
         section.addView(cache);
-        Switch ready = new Switch(activity);
-        ready.setText("Check printer readiness in the background");
-        ready.setChecked(AutoCache.liveCheckEnabled());
-        ready.setOnCheckedChangeListener((button, checked) -> AutoCache.setLiveCheckEnabled(checked));
-        section.addView(ready);
         Button manage = new Button(activity);
         manage.setText("Manage saved printer data");
         manage.setOnClickListener(button -> activity.startActivity(new Intent(activity, CacheSettingsActivity.class)));
@@ -62,3 +57,4 @@ public final class SettingsIntegration {
     }
     private SettingsIntegration() {}
 }
+

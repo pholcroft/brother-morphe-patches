@@ -18,9 +18,7 @@ import android.graphics.drawable.GradientDrawable;
 
 import android.os.Bundle;
 
-import android.os.Handler;
 
-import android.os.Looper;
 
 import android.view.Gravity;
 
@@ -76,7 +74,6 @@ public final class CacheSettingsActivity extends Activity {
 
         menu.getMenu().add(CommunicationTiming.isMeasuring(ip)?"Stop uncached measurement":"Measure without cache");
 
-        menu.getMenu().add("Refresh status").setEnabled(AutoCache.liveCheckEnabled());
 
         menu.getMenu().add("Clear saved data");
 
@@ -89,7 +86,6 @@ public final class CacheSettingsActivity extends Activity {
             if(item.getTitle().equals("Stop uncached measurement")){boolean observed=CommunicationTiming.stopMeasurement(ip);render();if(observed)new AlertDialog.Builder(this).setTitle("Uncached test result").setMessage(AutoCache.uncachedMeasurementSummary(ip)+"\n\nTime from the first to the last observed request or response for this printer.").setPositiveButton("OK",null).show();else new AlertDialog.Builder(this).setTitle("No requests recorded").setMessage("No printer requests were observed during this measurement. Any previous uncached result has not changed. Try starting the measurement again before opening print preview.").setPositiveButton("OK",null).show();return true;}
 
 
-            if(item.getTitle().equals("Refresh status")){Readiness.refresh(ip);new Handler(Looper.getMainLooper()).postDelayed(()->{if(!isFinishing())render();},4500);return true;}
 
             if(item.getTitle().equals("Clear saved data")){clearPrinter(ip);return true;}
 
@@ -108,9 +104,6 @@ public final class CacheSettingsActivity extends Activity {
         TextView name=text(AutoCache.printerName(ip),17,TEXT);name.setTypeface(null,Typeface.BOLD);details.addView(name);
         TextView address=text(ip+(AutoCache.hasChangedAddress(ip)?" · Address changed":""),14,MUTED);address.setPadding(0,dp(5),0,0);details.addView(address);
         header.addView(details,new LinearLayout.LayoutParams(0,ViewGroup.LayoutParams.WRAP_CONTENT,1));
-        String status=AutoCache.liveCheckEnabled()?AutoCache.readString("status|"+ip,"Not checked yet"):"Check off";
-        boolean ready=status.startsWith("Ready ·") || status.equals("Ready");
-        TextView badge=text(status,12,ready?0xff08623d:MUTED);badge.setMaxWidth(dp(135));badge.setPadding(dp(8),dp(5),dp(8),dp(5));badge.setBackground(rounded(ready?0xffd8f4e6:0xffeeeeee,0,14));header.addView(badge);
         TextView menu=text("⋮",24,TEXT);menu.setGravity(Gravity.CENTER);menu.setContentDescription("Printer options for "+ip);menu.setOnClickListener(v->printerMenu(v,ip));header.addView(menu,new LinearLayout.LayoutParams(dp(48),dp(48)));card.addView(header);
         TextView timings=text((CommunicationTiming.isMeasuring(ip)?"Uncached measurement running · Stop from the menu\n":"")+AutoCache.timingCardSummary(ip),12,MUTED);timings.setPadding(0,dp(8),dp(8),0);card.addView(timings);timings.postDelayed(()->timings.setText((CommunicationTiming.isMeasuring(ip)?"Uncached measurement running · Stop from the menu\n":"")+AutoCache.timingCardSummary(ip)),3500);
         return card;

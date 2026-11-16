@@ -115,8 +115,6 @@ public final class AutoCache {
     }
     public static boolean enabled(){SharedPreferences p=prefs;return p!=null && p.getBoolean("enabled",true);}
     public static synchronized void setEnabled(boolean value){SharedPreferences p=prefs;if(p!=null)p.edit().putBoolean("enabled",value).apply();if(!value){cacheEpoch++;resetVerification();}}
-    public static boolean liveCheckEnabled(){SharedPreferences p=prefs;return p!=null && p.getBoolean("live_check",false);}
-    public static void setLiveCheckEnabled(boolean value){SharedPreferences p=prefs;if(p!=null)p.edit().putBoolean("live_check",value).apply();}
     public static String readString(String key,String fallback){SharedPreferences p=prefs;return p==null?fallback:p.getString(key,fallback);}
     public static synchronized void saveTiming(String ip,long span,int live,int cached){saveTiming(ip,span,live,cached,0,0,0,0);}
     public static synchronized void saveTiming(String ip,long span,int live,int cached,long estimate,int matched,long liveTime,int liveMeasured){
@@ -195,7 +193,7 @@ public final class AutoCache {
             REQUEST_EPOCH.set(cacheEpoch);REQUEST_START.set(System.nanoTime());
             CommunicationTiming.request(ip);
             Diagnostics.begin(ip,id);
-            Readiness.maybeCheck(ip);if(!enabled()||CommunicationTiming.isMeasuring(ip))return null;
+            if(!enabled()||CommunicationTiming.isMeasuring(ip))return null;
             if(id.equals(MAC_OID)){VERIFIED.remove(ip);return null;}
             if(!isVerified(ip))return null;
             String saved=prefs.getString(key(ip,id),null);if(saved==null)return null;
