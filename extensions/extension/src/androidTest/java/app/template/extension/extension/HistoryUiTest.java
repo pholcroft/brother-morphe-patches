@@ -27,7 +27,9 @@ public final class HistoryUiTest {
             instrumentation.runOnMainSync(()->visible[0]=contains(activity.getWindow().getDecorView(),"Burst #"+sequence));
             if(!visible[0])Thread.sleep(50);
         }
+        boolean[] exportVisible={false},timeVisible={false};String time=java.text.DateFormat.getDateTimeInstance(java.text.DateFormat.MEDIUM,java.text.DateFormat.MEDIUM).format(new java.util.Date(burst.startedWallMillis));
+        instrumentation.runOnMainSync(()->{exportVisible[0]=contains(activity.getWindow().getDecorView(),"Export activity history");timeVisible[0]=contains(activity.getWindow().getDecorView(),time);});
         instrumentation.runOnMainSync(activity::finish);
-        if(!visible[0])throw new AssertionError("history screen did not display saved burst");
+        if(!visible[0]||!exportVisible[0]||!timeVisible[0])throw new AssertionError("history screen must show burst, export action and seconds");
     }
 }

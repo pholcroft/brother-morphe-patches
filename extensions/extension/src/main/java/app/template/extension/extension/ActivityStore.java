@@ -134,6 +134,14 @@ public final class ActivityStore extends SQLiteOpenHelper implements CacheCoordi
             ReplayRun result=new ReplayRun(id,ref,endpoint,elapsed,results);db.setTransactionSuccessful();return result;
         }finally{db.endTransaction();}
     }
+    public java.util.List<ReplayRun> listReplays(ActivityBurst.Ref ref){
+        SQLiteDatabase db=getReadableDatabase();java.util.ArrayList<ReplayRun> result=new java.util.ArrayList<>();
+        try(Cursor c=db.rawQuery("SELECT r.id,r.endpoint,r.elapsed FROM replay_runs r JOIN bursts b ON b.id=r.burst_id WHERE b.id=? AND b.printer_id=? AND b.sequence=? ORDER BY r.rowid",new String[]{ref.burstId,ref.printerId,Long.toString(ref.sequence)})){
+            while(c.moveToNext()){String id=c.getString(0),endpoint=c.getString(1);long elapsed=c.getLong(2);ArrayList<ReplayRun.RequestResult> rows=new ArrayList<>();
+                try(Cursor values=db.rawQuery("SELECT token,response FROM replay_responses WHERE run_id=? ORDER BY ordinal",new String[]{id})){while(values.moveToNext())rows.add(new ReplayRun.RequestResult(values.getString(0),values.isNull(1)?null:values.getBlob(1)));}
+                result.add(new ReplayRun(id,ref,endpoint,elapsed,rows));}
+        }return java.util.Collections.unmodifiableList(result);
+    }
     /** Latest means greatest sequence, even when older bursts arrive later. */
     public ActivityBurst latestBurst(String printerId){
         SQLiteDatabase db=getReadableDatabase();db.beginTransaction();
