@@ -8,7 +8,7 @@ The patch sees supported single-object SNMP GET calls in Brother Print Service P
 
 ## Dictionary
 
-Definitions live in [`data/oid-dictionary.json`](../data/oid-dictionary.json), with numeric object prefixes, symbolic names, plain-language names, descriptions and a source URL. Add or correct an entry there and run `python tools/generate_oid_dictionary.py`; commit the generated Java and use `--check` to validate it. Object instances are matched at dot boundaries using the longest defined prefix. Unknown or unverified vendor-specific identifiers remain unknown. Review a source and its licence before adding a definition. Do not put printer captures, credentials, private addresses, serial numbers or responses in a pull request.
+Definitions live in [`data/oid-dictionary.json`](../data/oid-dictionary.json), with numeric object prefixes, symbolic names, plain-language names, descriptions and a source URL. Add or correct an entry there and run `python tools/generate_oid_dictionary.py`; commit the generated Java and use `--check` to validate it. Object instances are matched at dot boundaries using the longest defined prefix. Optional `values` objects map integer strings to meanings, with a separate `values_source` URL; unlisted values remain raw. Brother-specific entries are based on the service’s observed use in version 1.17.0 and are not represented as official Brother MIB definitions; see [Brother OID evidence](BROTHER-OID-EVIDENCE.md). Unknown or unverified vendor-specific identifiers remain unknown. Review a source and its licence before adding a definition. Do not put printer captures, credentials, private addresses, serial numbers or responses in a pull request.
 
 ## Trace presentation research
 

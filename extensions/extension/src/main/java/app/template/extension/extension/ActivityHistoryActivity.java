@@ -67,7 +67,7 @@ public final class ActivityHistoryActivity extends Activity {
     }
     private void showRequest(RequestRecord request){OidDictionary.Entry entry=OidDictionary.lookup(request.oid);String name=entry==null?"Unknown request":entry.name;
         String description=entry==null?"This identifier has not been described in the dictionary yet.":entry.description+"\n\nMIB name: "+entry.symbol;
-        String value=SnmpValueFormatter.format(request.response());
+        String value=SnmpValueFormatter.format(request.response(),request.oid);
         String details=String.format(Locale.ROOT,"%s\n\nOID: %s\nSource: %s\nTime from burst start: %.3f s\nDuration: %.3f s\nOutcome: %s\n\nRecorded response: %s",description,request.oid,request.cached?"Cache":"Printer",request.startNanos/1e9,(request.endNanos-request.startNanos)/1e9,request.outcome.name(),value);
         new AlertDialog.Builder(this).setTitle(name).setMessage(details).setPositiveButton("Close",null).show();
     }

@@ -7,6 +7,11 @@ import java.nio.charset.StandardCharsets;
 
 /** Present observed values without pretending binary data is text. */
 public final class SnmpValueFormatter {
+ public static String format(byte[] response,String oid){
+  String raw=format(response);OidDictionary.Entry entry=OidDictionary.lookup(oid);if(entry==null||response==null)return raw;
+  String encoded=new String(response,StandardCharsets.UTF_8),meaning=entry.valueMeaning(encoded);
+  return meaning==null?raw:raw+" ("+meaning+")";
+ }
  public static String format(byte[] response){
   if(response==null)return "Not recorded";String encoded=new String(response,StandardCharsets.UTF_8);
   if(encoded.startsWith("integer:"))return encoded.substring(8);

@@ -10,7 +10,7 @@ public final class RequestRow {
   if(request.outcome==RequestRecord.Outcome.TIMEOUT)value="Timed out";
   else if(request.outcome==RequestRecord.Outcome.CANCELLED)value="Cancelled";
   else if(request.outcome==RequestRecord.Outcome.ERROR&&request.response()==null)value="Request failed";
-  else value=SnmpValueFormatter.format(request.response());
+  else value=SnmpValueFormatter.format(request.response(),request.oid);
   value=value.replaceAll("[\\r\\n\\t]+"," ").trim();if(value.isEmpty())value="Empty response";
   if(value.length()>120)value=value.substring(0,117)+"...";
   String timing="";
