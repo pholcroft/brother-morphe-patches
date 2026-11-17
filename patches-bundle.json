@@ -1,6 +1,6 @@
 {
-  "created_at": "2026-11-17T18:49:41",
-  "description": "Name Brother printer requests and explain verified response values.",
-  "download_url": "https://raw.githubusercontent.com/pholcroft/brother-morphe-patches/dev/patches-0.2.2-dev.3.mpp",
-  "version": "0.2.2-dev.3"
+  "created_at": "2026-11-17T19:07:52",
+  "description": "Show a sequential estimated uncached timeline for recorded requests.",
+  "download_url": "https://raw.githubusercontent.com/pholcroft/brother-morphe-patches/dev/patches-0.2.2-dev.4.mpp",
+  "version": "0.2.2-dev.4"
 }

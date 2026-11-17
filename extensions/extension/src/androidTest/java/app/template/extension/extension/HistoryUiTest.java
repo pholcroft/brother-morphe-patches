@@ -35,8 +35,8 @@ public final class HistoryUiTest {
         ActivityBurst example=new ActivityBurst(new ActivityBurst.Ref(printer.id,"row-example",sequence),1,2000000L,java.util.Arrays.asList(request,language));
         android.app.AlertDialog[] dialog={null};java.lang.reflect.Method method=ActivityHistoryActivity.class.getDeclaredMethod("showRequests",ActivityBurst.class);method.setAccessible(true);
         instrumentation.runOnMainSync(()->{try{dialog[0]=(android.app.AlertDialog)method.invoke(activity,example);}catch(Exception e){throw new RuntimeException(e);}});instrumentation.waitForIdleSync();
-        boolean[] rowVisible={false};instrumentation.runOnMainSync(()->rowVisible[0]=contains(dialog[0].getWindow().getDecorView(),"System description")&&contains(dialog[0].getWindow().getDecorView(),"Brother")&&contains(dialog[0].getWindow().getDecorView(),"~75 ms")&&contains(dialog[0].getWindow().getDecorView(),"6 (PostScript)"));
-        instrumentation.runOnMainSync(()->dialog[0].dismiss());if(!rowVisible[0])throw new AssertionError("request list must show name, response and previous printer time");
+        boolean[] rowVisible={false};instrumentation.runOnMainSync(()->rowVisible[0]=contains(dialog[0].getWindow().getDecorView(),"System description")&&contains(dialog[0].getWindow().getDecorView(),"Brother")&&contains(dialog[0].getWindow().getDecorView(),"0.000 s · ~75 ms")&&contains(dialog[0].getWindow().getDecorView(),"0.075 s · ~75 ms")&&contains(dialog[0].getWindow().getDecorView(),"6 (PostScript)"));
+        instrumentation.runOnMainSync(()->dialog[0].dismiss());if(!rowVisible[0])throw new AssertionError("request list must show sequential timings, name and response");
         instrumentation.runOnMainSync(activity::finish);
         if(!visible[0]||!exportVisible[0]||!timeVisible[0])throw new AssertionError("history screen must show burst, export action and seconds");
     }
