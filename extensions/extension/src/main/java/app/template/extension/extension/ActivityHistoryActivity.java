@@ -50,8 +50,20 @@ public final class ActivityHistoryActivity extends Activity {
     private void showBurst(ActivityBurst burst){
         String message=String.format(Locale.ROOT,"Activity: %.2f s\nRequests: %d",burst.elapsedNanos/1000000000.0,burst.requests().size());
         AlertDialog.Builder dialog=new AlertDialog.Builder(this).setTitle("Burst #"+burst.ref.sequence).setMessage(message).setNegativeButton("Close",null);
+        if(!burst.requests().isEmpty())dialog.setNeutralButton("View requests",(d,w)->showRequests(burst));
         if(burst.coverage.requestsComplete)dialog.setPositiveButton("Measure without cache",(d,w)->startReplay(burst.ref));
         dialog.show();
+    }
+    private void showRequests(ActivityBurst burst){
+        List<RequestRecord> requests=burst.requests();String[] rows=new String[requests.size()];
+        for(int i=0;i<requests.size();i++){RequestRecord r=requests.get(i);OidDictionary.Entry entry=OidDictionary.lookup(r.oid);String name=entry==null?"Unknown request":entry.name;rows[i]=String.format(Locale.ROOT,"%.3f s · %s · %s\n%s",r.startNanos/1e9,r.cached?"Cache":"Printer",name,r.oid);}
+        new AlertDialog.Builder(this).setTitle("Burst #"+burst.ref.sequence+" requests").setItems(rows,(d,index)->showRequest(requests.get(index))).setNegativeButton("Close",null).show();
+    }
+    private void showRequest(RequestRecord request){OidDictionary.Entry entry=OidDictionary.lookup(request.oid);String name=entry==null?"Unknown request":entry.name;
+        String description=entry==null?"This identifier has not been described in the dictionary yet.":entry.description+"\n\nMIB name: "+entry.symbol;
+        String value=SnmpValueFormatter.format(request.response());
+        String details=String.format(Locale.ROOT,"%s\n\nOID: %s\nSource: %s\nTime from burst start: %.3f s\nDuration: %.3f s\nOutcome: %s\n\nRecorded response: %s",description,request.oid,request.cached?"Cache":"Printer",request.startNanos/1e9,(request.endNanos-request.startNanos)/1e9,request.outcome.name(),value);
+        new AlertDialog.Builder(this).setTitle(name).setMessage(details).setPositiveButton("Close",null).show();
     }
     private void startReplay(ActivityBurst.Ref ref){
         HistoryRuntime.startReplay(ref,error->main.post(()->{if(isFinishing()||isDestroyed())return;if(error!=null)new AlertDialog.Builder(this).setTitle("Unable to replay").setMessage(error).setPositiveButton("OK",null).show();else finish();}));
