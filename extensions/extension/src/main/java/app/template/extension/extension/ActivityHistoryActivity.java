@@ -54,10 +54,16 @@ public final class ActivityHistoryActivity extends Activity {
         if(burst.coverage.requestsComplete)dialog.setPositiveButton("Measure without cache",(d,w)->startReplay(burst.ref));
         dialog.show();
     }
-    private void showRequests(ActivityBurst burst){
+    private AlertDialog showRequests(ActivityBurst burst){
         List<RequestRecord> requests=burst.requests();String[] rows=new String[requests.size()];
-        for(int i=0;i<requests.size();i++){RequestRecord r=requests.get(i);OidDictionary.Entry entry=OidDictionary.lookup(r.oid);String name=entry==null?"Unknown request":entry.name;rows[i]=String.format(Locale.ROOT,"%.3f s · %s · %s\n%s",r.startNanos/1e9,r.cached?"Cache":"Printer",name,r.oid);}
-        new AlertDialog.Builder(this).setTitle("Burst #"+burst.ref.sequence+" requests").setItems(rows,(d,index)->showRequest(requests.get(index))).setNegativeButton("Close",null).show();
+        for(int i=0;i<requests.size();i++)rows[i]=RequestRow.format(requests.get(i));
+        android.widget.ArrayAdapter<String> adapter=new android.widget.ArrayAdapter<String>(this,android.R.layout.simple_list_item_1,rows){
+            @Override public android.view.View getView(int position,android.view.View convert,ViewGroup parent){
+                LinearLayout row;if(convert instanceof LinearLayout)row=(LinearLayout)convert;else{row=new LinearLayout(ActivityHistoryActivity.this);row.setOrientation(LinearLayout.VERTICAL);row.setPadding(dp(20),dp(9),dp(20),dp(9));TextView title=text("",15,0xff212121);title.setTypeface(null,Typeface.BOLD);row.addView(title);TextView subtitle=text("",13,0xff666666);subtitle.setMaxLines(2);subtitle.setEllipsize(android.text.TextUtils.TruncateAt.END);row.addView(subtitle);}
+                String value=rows[position];int split=value.indexOf('\n');((TextView)row.getChildAt(0)).setText(split<0?value:value.substring(0,split));((TextView)row.getChildAt(1)).setText(split<0?"":value.substring(split+1));return row;
+            }
+        };
+        AlertDialog dialog=new AlertDialog.Builder(this).setTitle("Burst #"+burst.ref.sequence+" requests").setAdapter(adapter,(d,index)->showRequest(requests.get(index))).setNegativeButton("Close",null).create();dialog.show();return dialog;
     }
     private void showRequest(RequestRecord request){OidDictionary.Entry entry=OidDictionary.lookup(request.oid);String name=entry==null?"Unknown request":entry.name;
         String description=entry==null?"This identifier has not been described in the dictionary yet.":entry.description+"\n\nMIB name: "+entry.symbol;
