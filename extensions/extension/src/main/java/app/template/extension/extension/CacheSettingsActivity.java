@@ -138,7 +138,6 @@ public final class CacheSettingsActivity extends Activity {
         TextView headline=text("Loading activity...",18,TEXT);headline.setTypeface(null,Typeface.BOLD);saving.addView(headline);
         TextView label=text("",14,MUTED);label.setPadding(dp(8),0,0,dp(3));saving.addView(label,new LinearLayout.LayoutParams(0,ViewGroup.LayoutParams.WRAP_CONTENT,1));
         TextView comparison=text("",16,TEXT);comparison.setPadding(0,dp(8),0,0);activity.addView(comparison);
-        TextView explanation=text("",11,MUTED);explanation.setPadding(0,dp(3),0,0);activity.addView(explanation);
         LinearLayout counts=new LinearLayout(this);counts.setOrientation(LinearLayout.HORIZONTAL);counts.setPadding(0,dp(12),0,0);activity.addView(counts);
         LinearLayout hitColumn=new LinearLayout(this);hitColumn.setOrientation(LinearLayout.VERTICAL);hitColumn.setPadding(dp(12),dp(9),dp(12),dp(9));hitColumn.setBackground(rounded(0xfff2f2f2,0,8));LinearLayout.LayoutParams hitParams=new LinearLayout.LayoutParams(0,ViewGroup.LayoutParams.WRAP_CONTENT,1);hitParams.rightMargin=dp(6);counts.addView(hitColumn,hitParams);
         TextView hitLabel=text("Cache hits",13,MUTED),hitCount=text("-",26,TEXT);hitCount.setTypeface(null,Typeface.BOLD);hitColumn.addView(hitLabel);hitColumn.addView(hitCount);
@@ -147,8 +146,8 @@ public final class CacheSettingsActivity extends Activity {
         counts.setVisibility(View.GONE);
         Runnable load=()->{long generation=AutoCache.generation();HistoryRuntime.loadLatest(ip,AutoCache.readString("mac|"+ip,""),(burst,error)->replayHandler.post(()->{
             if(isFinishing()||isDestroyed()||generation!=AutoCache.generation()||!activity.isAttachedToWindow())return;shown[0]=burst;
-            if(error!=null||burst==null){headline.setText(error==null?"No activity recorded":"Activity unavailable");label.setText("");comparison.setText("");explanation.setText("");counts.setVisibility(View.GONE);return;}
-            BurstSummary.Metrics metrics=BurstSummary.calculate(burst);headline.setTextSize(metrics.complete?36:18);headline.setText(metrics.headline());label.setText(metrics.complete?"saved on "+(metrics.hits+metrics.misses)+" requests":"");String comparisonText=metrics.comparison();android.text.SpannableString styled=new android.text.SpannableString(comparisonText);int arrow=comparisonText.indexOf(" → ");if(metrics.complete&&arrow>0)styled.setSpan(new android.text.style.StrikethroughSpan(),0,arrow,android.text.Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);comparison.setText(styled);explanation.setText("Estimated request time · Burst #"+burst.ref.sequence);hitCount.setText(Integer.toString(metrics.hits));liveCount.setText(Integer.toString(metrics.misses));counts.setVisibility(View.VISIBLE);
+            if(error!=null||burst==null){headline.setText(error==null?"No activity recorded":"Activity unavailable");label.setText("");comparison.setText("");counts.setVisibility(View.GONE);return;}
+            BurstSummary.Metrics metrics=BurstSummary.calculate(burst);headline.setTextSize(metrics.complete?36:18);headline.setText(metrics.headline());label.setText(metrics.complete?"saved on "+(metrics.hits+metrics.misses)+" requests":"");String comparisonText=metrics.comparison();android.text.SpannableString styled=new android.text.SpannableString(comparisonText);int arrow=comparisonText.indexOf(" → ");if(metrics.complete&&arrow>0)styled.setSpan(new android.text.style.StrikethroughSpan(),0,arrow,android.text.Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);comparison.setText(styled);hitCount.setText(Integer.toString(metrics.hits));liveCount.setText(Integer.toString(metrics.misses));counts.setVisibility(View.VISIBLE);
         }));};
         activity.post(load);activity.postDelayed(load,3500);
         return card;
