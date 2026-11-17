@@ -23,11 +23,12 @@ public final class ServiceCacheIntegrationTest {
         Class<?> socketType=Class.forName("com.brother.sdk.network.BrDatagramSocket",true,loader),requestType=Class.forName("com.brother.sdk.common.socket.devicemanagement.snmp.SnmpRequest",true,loader);
         String ip="192.0.2.91",mac="1.3.6.1.2.1.2.2.1.6.1",oid="1.3.6.1.2.1.1.1.0";
         Object socket=socketType.getConstructor(InetAddress.class,int.class).newInstance(InetAddress.getByName(ip),161);
-        String earlyOid="1.3.6.1.2.1.1.2.0";Object early=request(requestType,earlyOid);
+        String earlyOid="1.3.6.1.2.1.25.3.2.1.3.1";Object early=request(requestType,earlyOid);
         if(AutoCache.lookup(socket,early)!=null)throw new AssertionError("unverified printer must not serve a cache hit");
-        AutoCache.record(socket,early,response(loader,earlyOid,new byte[]{66}));
+        AutoCache.record(socket,early,response(loader,earlyOid,"Brother Test Model".getBytes(java.nio.charset.StandardCharsets.UTF_8)));
         Object identity=request(requestType,mac);AutoCache.lookup(socket,identity);AutoCache.record(socket,identity,response(loader,mac,new byte[]{2,1,2,3,4,9}));
         if(!HistoryRuntime.awaitIdle())throw new AssertionError("identity worker failed");
+        if(!"Brother Test Model".equals(AutoCache.printerName(ip)))throw new AssertionError("name seen before identity must appear on the card");
         if(AutoCache.lookup(socket,request(requestType,earlyOid))==null)throw new AssertionError("live response received before identity must be retained after verification");
         Object query=request(requestType,oid);if(AutoCache.lookup(socket,query)!=null)throw new AssertionError("first request must be live");
         AutoCache.record(socket,query,response(loader,oid,new byte[]{65}));

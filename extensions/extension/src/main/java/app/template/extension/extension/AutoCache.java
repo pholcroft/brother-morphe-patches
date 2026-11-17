@@ -129,7 +129,7 @@ public final class AutoCache {
         if(moved||(last!=null&&!last.equals(ip)))edit.putBoolean("dynamic|"+mac,true);
         edit.apply();VERIFIED.put(ip,monotonicMillis());
         if(historyStarted){
-            try{historyVerify.invoke(null,ip,mac);LinkedHashMap<PendingKey,String> staged=PENDING_HISTORY.remove(ip);if(staged!=null)for(Map.Entry<PendingKey,String> entry:staged.entrySet()){PendingKey k=entry.getKey();historyLearn.invoke(null,ip,k.version,k.community,k.oid,entry.getValue());}}
+            try{historyVerify.invoke(null,ip,mac);LinkedHashMap<PendingKey,String> staged=PENDING_HISTORY.remove(ip);if(staged!=null)for(Map.Entry<PendingKey,String> entry:staged.entrySet()){PendingKey k=entry.getKey();historyLearn.invoke(null,ip,k.version,k.community,k.oid,entry.getValue());if(k.oid.equals("1.3.6.1.2.1.25.3.2.1.3.1")||k.oid.equals("1.3.6.1.2.1.1.1.0"))p.edit().putString("name|"+ip,entry.getValue()).apply();}}
             catch(Exception|LinkageError ignored){PENDING_HISTORY.remove(ip);}
         }
     }

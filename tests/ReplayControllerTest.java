@@ -6,5 +6,11 @@ public class ReplayControllerTest {static void check(boolean b,String m){if(!b)t
  ReplayController.Factory immediate=(ip,firstSpec)->new ReplayEngine.Transport(){public String probe(ReplayEngine.Spec x){return "02:01:02:03:04:05";}public String request(ReplayEngine.Spec x){return "integer:2";}public void close(){}};
  check(ReplayController.startRecorded("192.0.2.1",Arrays.asList(spec),Arrays.asList("integer:1"),"02:01:02:03:04:05",7,immediate,r->{persisted.set(r);saved.countDown();}),"start recorded replay");
  check(saved.await(3,TimeUnit.SECONDS)&&persisted.get().responses.equals(Arrays.asList("integer:2")),"completed replay must expose its exact responses for persistence");
+ CountDownLatch pause=new CountDownLatch(1),resume=new CountDownLatch(1),progressDone=new CountDownLatch(1);
+ ReplayController.Factory progress=(ip,firstSpec)->new ReplayEngine.Transport(){int n;public String probe(ReplayEngine.Spec x){return "02:01:02:03:04:05";}public String request(ReplayEngine.Spec x)throws Exception{if(++n==2){pause.countDown();resume.await();throw new java.net.SocketTimeoutException();}return "integer:2";}public void close(){}};
+ ReplayController.Listener progressListener=()->{if(!ReplayController.isRunning())progressDone.countDown();};ReplayController.attach(progressListener);
+ check(ReplayController.startRecorded("192.0.2.1",Arrays.asList(spec,spec,spec),Arrays.asList("integer:1","integer:1","integer:1"),"02:01:02:03:04:05",8,progress,null),"start progress replay");
+ check(pause.await(3,TimeUnit.SECONDS),"second request entered");check(ReplayController.completed()==1&&ReplayController.total()==3,"progress must count completed requests");resume.countDown();check(progressDone.await(3,TimeUnit.SECONDS),"failed replay finished");
+ ReplayController.Outcome failed=ReplayController.takeOutcome();check(failed.error.contains("2 of 3")&&failed.error.toLowerCase().contains("timed out"),"show request position and timeout without leaking details");ReplayController.detach(progressListener);
  System.out.println("Replay screen lifecycle and cancellation checks passed");}}
 
