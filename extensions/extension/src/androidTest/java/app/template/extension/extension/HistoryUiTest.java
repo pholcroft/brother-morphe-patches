@@ -54,6 +54,14 @@ public final class HistoryUiTest {
         if(selected[0]==null)throw new AssertionError("burst row missing");instrumentation.runOnMainSync(()->{View target=selected[0];while(!target.isClickable()&&target.getParent() instanceof View)target=(View)target.getParent();target.performClick();});instrumentation.waitForIdleSync();
         boolean[] screen={false};instrumentation.runOnMainSync(()->screen[0]=contains(activity.getWindow().getDecorView(),"Request activity")&&contains(activity.getWindow().getDecorView(),"System description")&&contains(activity.getWindow().getDecorView(),"Brother")&&contains(activity.getWindow().getDecorView(),"0.000 s")&&contains(activity.getWindow().getDecorView(),"~75 ms")&&contains(activity.getWindow().getDecorView(),"0.075 s")&&contains(activity.getWindow().getDecorView(),"6 (PostScript)"));
         if(!screen[0])throw new AssertionError("clicking a burst should show the full request screen with names, values and timings");
+        android.accessibilityservice.AccessibilityServiceInfo accessibility=instrumentation.getUiAutomation().getServiceInfo();accessibility.flags|=android.accessibilityservice.AccessibilityServiceInfo.FLAG_RETRIEVE_INTERACTIVE_WINDOWS;instrumentation.getUiAutomation().setServiceInfo(accessibility);
+        View[] activityMenu={null};instrumentation.runOnMainSync(()->activityMenu[0]=findDescription(activity.getWindow().getDecorView(),"Activity options"));
+        if(activityMenu[0]==null)throw new AssertionError("request activity menu is missing");
+        instrumentation.runOnMainSync(()->activityMenu[0].performClick());instrumentation.waitForIdleSync();
+        android.view.accessibility.AccessibilityNodeInfo exportNode=null;boolean replayFound=false;
+        for(android.view.accessibility.AccessibilityWindowInfo window:instrumentation.getUiAutomation().getWindows()){android.view.accessibility.AccessibilityNodeInfo root=window.getRoot();if(root!=null){java.util.List<android.view.accessibility.AccessibilityNodeInfo> exportNodes=root.findAccessibilityNodeInfosByText("Export activity");if(!exportNodes.isEmpty())exportNode=exportNodes.get(0);if(!root.findAccessibilityNodeInfosByText("Measure without cache").isEmpty())replayFound=true;}}
+        if(exportNode==null||replayFound)throw new AssertionError("request menu must offer export and not replay");
+        instrumentation.sendKeyDownUpSync(android.view.KeyEvent.KEYCODE_BACK);instrumentation.waitForIdleSync();
         android.os.Bundle saved=new android.os.Bundle();instrumentation.runOnMainSync(()->instrumentation.callActivityOnSaveInstanceState(activity,saved));
         if(!"ui-test-burst".equals(saved.getString("burst_id"))||saved.getLong("burst_sequence")!=sequence)throw new AssertionError("screen state must retain the exact selected burst");
         instrumentation.runOnMainSync(activity::onBackPressed);instrumentation.waitForIdleSync();

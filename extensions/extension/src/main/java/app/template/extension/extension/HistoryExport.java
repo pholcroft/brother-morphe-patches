@@ -19,5 +19,6 @@ public final class HistoryExport {
    out.endArray();out.name("replays").beginArray();for(ReplayRun replay:replays.forBurst(burst.ref)){out.beginObject();out.name("replay_id").value(replay.id);out.name("endpoint").value(replay.endpoint);out.name("elapsed_ns").value(replay.elapsedNanos);out.name("responses").beginArray();for(ReplayRun.RequestResult rr:replay.results()){out.beginObject();out.name("request_token").value(rr.requestToken);bytes(out,"response_base64",rr.response());out.endObject();}out.endArray();out.endObject();}out.endArray();out.endObject();}
   out.endArray();out.endObject();out.flush();
  }
+ public static void writeBurst(Writer writer,PrinterRecord printer,ActivityBurst burst)throws IOException{write(writer,printer,java.util.Collections.singletonList(burst),ref->java.util.Collections.emptyList());}
  private HistoryExport(){}
 }

@@ -19,7 +19,7 @@ import java.util.Locale;
 
 /** Activity history for one verified printer. */
 public final class ActivityHistoryActivity extends Activity {
-    private static final int EXPORT=76;
+    private static final int EXPORT=76, EXPORT_BURST=77;
     private final Handler main=new Handler(Looper.getMainLooper());
     private LinearLayout content;
     private boolean viewingRequests;private boolean historyAvailable;private ActivityBurst.Ref selectedRef;
@@ -64,8 +64,11 @@ public final class ActivityHistoryActivity extends Activity {
     }
 
     private void exportHistory(){Intent intent=new Intent(Intent.ACTION_CREATE_DOCUMENT);intent.addCategory(Intent.CATEGORY_OPENABLE);intent.setType("application/json");String timestamp=new java.text.SimpleDateFormat("yyyy-MM-dd_HH-mm-ss",Locale.ROOT).format(new Date());intent.putExtra(Intent.EXTRA_TITLE,"printer-activity-"+timestamp+".json");startActivityForResult(intent,EXPORT);}
-    @Override protected void onActivityResult(int request,int result,Intent data){super.onActivityResult(request,result,data);if(request!=EXPORT||result!=RESULT_OK||data==null||data.getData()==null)return;
-        HistoryRuntime.exportHistory(getApplicationContext(),data.getData(),getIntent().getStringExtra("printer_ip"),getIntent().getStringExtra("printer_mac"),error->main.post(()->{if(isFinishing()||isDestroyed())return;android.widget.Toast.makeText(this,error==null?"Activity saved. Review it before sharing.":error,android.widget.Toast.LENGTH_LONG).show();}));
+    private void exportBurst(ActivityBurst.Ref ref){Intent intent=new Intent(Intent.ACTION_CREATE_DOCUMENT);intent.addCategory(Intent.CATEGORY_OPENABLE);intent.setType("application/json");String timestamp=new java.text.SimpleDateFormat("yyyy-MM-dd_HH-mm-ss",Locale.ROOT).format(new Date());intent.putExtra(Intent.EXTRA_TITLE,"printer-activity-burst-"+ref.sequence+"-"+timestamp+".json");startActivityForResult(intent,EXPORT_BURST);}
+    @Override protected void onActivityResult(int request,int result,Intent data){super.onActivityResult(request,result,data);if((request!=EXPORT&&request!=EXPORT_BURST)||result!=RESULT_OK||data==null||data.getData()==null)return;
+        HistoryRuntime.ReplayCallback callback=error->main.post(()->{if(isFinishing()||isDestroyed())return;android.widget.Toast.makeText(this,error==null?"Activity saved. Review it before sharing.":error,android.widget.Toast.LENGTH_LONG).show();});
+        if(request==EXPORT_BURST){if(selectedRef==null){callback.complete("This activity is no longer available.");return;}HistoryRuntime.exportBurst(getApplicationContext(),data.getData(),selectedRef,callback);}
+        else HistoryRuntime.exportHistory(getApplicationContext(),data.getData(),getIntent().getStringExtra("printer_ip"),getIntent().getStringExtra("printer_mac"),callback);
     }
     private void showRequests(ActivityBurst burst){
         viewingRequests=true;selectedRef=burst.ref;
@@ -75,7 +78,7 @@ public final class ActivityHistoryActivity extends Activity {
         LinearLayout header=new LinearLayout(this);header.setGravity(android.view.Gravity.CENTER_VERTICAL);header.setBackgroundColor(0xff182a43);root.addView(header);
         TextView back=text("\u2039",32,Color.WHITE);back.setGravity(android.view.Gravity.CENTER);back.setContentDescription("Back");back.setOnClickListener(v->onBackPressed());header.addView(back,new LinearLayout.LayoutParams(dp(56),dp(64)));
         LinearLayout labels=new LinearLayout(this);labels.setOrientation(LinearLayout.VERTICAL);TextView title=text("Request activity",20,Color.WHITE);title.setTypeface(null,Typeface.BOLD);labels.addView(title);labels.addView(text("Burst #"+burst.ref.sequence+" · Estimated uncached",13,Color.WHITE));header.addView(labels,new LinearLayout.LayoutParams(0,ViewGroup.LayoutParams.WRAP_CONTENT,1));
-        TextView menu=text("\u22ee",26,Color.WHITE);menu.setGravity(android.view.Gravity.CENTER);menu.setContentDescription("Activity options");menu.setOnClickListener(v->{android.widget.PopupMenu popup=new android.widget.PopupMenu(this,menu);android.view.MenuItem measure=popup.getMenu().add("Measure without cache");measure.setEnabled(burst.coverage.requestsComplete);popup.setOnMenuItemClickListener(item->{startReplay(burst.ref);return true;});popup.show();});header.addView(menu,new LinearLayout.LayoutParams(dp(48),dp(64)));
+        TextView menu=text("\u22ee",26,Color.WHITE);menu.setGravity(android.view.Gravity.CENTER);menu.setContentDescription("Activity options");menu.setOnClickListener(v->{android.widget.PopupMenu popup=new android.widget.PopupMenu(this,menu);popup.getMenu().add("Export activity");popup.setOnMenuItemClickListener(item->{exportBurst(burst.ref);return true;});popup.show();});header.addView(menu,new LinearLayout.LayoutParams(dp(48),dp(64)));
         LinearLayout columnHeader=new LinearLayout(this);columnHeader.setGravity(android.view.Gravity.CENTER_VERTICAL);columnHeader.setPadding(dp(16),dp(10),dp(16),dp(10));columnHeader.setBackgroundColor(0xffd9efec);TextView timeHeader=text("Time",14,0xff212121);timeHeader.setTypeface(null,Typeface.BOLD);columnHeader.addView(timeHeader,new LinearLayout.LayoutParams(dp(100),ViewGroup.LayoutParams.WRAP_CONTENT));TextView requestHeader=text("Request / response",14,0xff212121);requestHeader.setTypeface(null,Typeface.BOLD);columnHeader.addView(requestHeader,new LinearLayout.LayoutParams(0,ViewGroup.LayoutParams.WRAP_CONTENT,1));root.addView(columnHeader);
         List<RequestRecord> requests=burst.requests();long[] durations=RequestTimeline.durations(requests),offsets=RequestTimeline.offsets(durations);
         android.widget.ListView list=new android.widget.ListView(this);list.setBackgroundColor(Color.WHITE);list.setDivider(new android.graphics.drawable.ColorDrawable(0xffd9dfe2));list.setDividerHeight(dp(1));
@@ -91,8 +94,5 @@ public final class ActivityHistoryActivity extends Activity {
         String value=SnmpValueFormatter.format(request.response(),request.oid);
         String details=String.format(Locale.ROOT,"%s\n\nOID: %s\nSource: %s\nTime from burst start: %.3f s\nDuration: %.3f s\nOutcome: %s\n\nRecorded response: %s",description,request.oid,request.cached?"Cache":"Printer",request.startNanos/1e9,(request.endNanos-request.startNanos)/1e9,request.outcome.name(),value);
         new AlertDialog.Builder(this).setTitle(name).setMessage(details).setPositiveButton("Close",null).show();
-    }
-    private void startReplay(ActivityBurst.Ref ref){
-        HistoryRuntime.startReplay(ref,error->main.post(()->{if(isFinishing()||isDestroyed())return;if(error!=null)new AlertDialog.Builder(this).setTitle("Unable to replay").setMessage(error).setPositiveButton("OK",null).show();else finish();}));
     }
 }

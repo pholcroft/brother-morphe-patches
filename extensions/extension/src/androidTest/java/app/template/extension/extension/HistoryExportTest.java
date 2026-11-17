@@ -21,6 +21,10 @@ public final class HistoryExportTest {
   if(first.getLong("sequence")!=seq||first.getJSONArray("requests").getJSONObject(0).getLong("start_offset_ns")!=100||!first.getJSONArray("requests").getJSONObject(0).getBoolean("cached")||first.getJSONArray("replays").length()!=1||!first.getJSONArray("requests").getJSONObject(0).getString("oid_name").equals("System description"))throw new AssertionError("export must contain ordered request timing and replay");
   if(!first.getJSONArray("requests").getJSONObject(1).getString("value_meaning").equals("PostScript"))throw new AssertionError("export must include verified value meanings");
   if(output.toString().contains("community"))throw new AssertionError("credentials must not be exported");
+  StringWriter single=new StringWriter();HistoryExport.writeBurst(single,p,burst);
+  JSONObject exported=new JSONObject(single.toString());
+  if(exported.getJSONArray("bursts").length()!=1||exported.getJSONArray("bursts").getJSONObject(0).getLong("sequence")!=seq||exported.getJSONArray("bursts").getJSONObject(0).getJSONArray("requests").length()!=2)throw new AssertionError("single burst export must contain the selected requests");
+  if(single.toString().contains("community"))throw new AssertionError("single burst export must not include credentials");
   store.clearPrinter(p.id);store.close();
  }
 }

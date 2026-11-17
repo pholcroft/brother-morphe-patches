@@ -106,6 +106,16 @@ public final class HistoryRuntime {
             }callback.complete(null);
         }catch(Exception e){failure=new IllegalStateException("Could not export printer history",e);callback.complete("Could not save activity history. Please try again.");}});
     }
+    public static void exportBurst(Context context,android.net.Uri destination,ActivityBurst.Ref ref,ReplayCallback callback){
+        ExecutorService target=worker;if(target==null){callback.complete("Printer history is unavailable.");return;}final Context app=context.getApplicationContext();
+        target.execute(()->{try{ActivityStore db=store;if(db==null)throw new IllegalStateException("Printer history is unavailable.");
+            PrinterRecord printer=db.findPrinter(ref.printerId);ActivityBurst burst=db.loadBurst(ref.printerId,ref.burstId);
+            if(printer==null||burst==null||burst.ref.sequence!=ref.sequence)throw new IllegalStateException("Activity no longer available.");
+            try(java.io.OutputStream stream=app.getContentResolver().openOutputStream(destination);java.io.Writer writer=stream==null?null:new java.io.OutputStreamWriter(stream,java.nio.charset.StandardCharsets.UTF_8)){
+                if(writer==null)throw new java.io.IOException("No output stream");HistoryExport.writeBurst(writer,printer,burst);
+            }callback.complete(null);
+        }catch(Exception e){callback.complete("Could not save this activity. Please try again.");}});
+    }
     public static void clearHistory(String ip,String mac,ReplayCallback callback){
         ExecutorService target=worker;if(target==null){callback.complete("Printer history is unavailable.");return;}
         CommunicationTiming.discard(ip);
