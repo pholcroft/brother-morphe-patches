@@ -135,6 +135,10 @@ public final class HistoryRuntime {
             callback.complete(db.findPrinter(id),db.listBursts(id),null);
         }catch(RuntimeException e){failure=e;callback.complete(null,null,"Could not load printer history.");}});
     }
+    public static void loadBurst(ActivityBurst.Ref ref,LatestCallback callback){
+        ExecutorService target=worker;if(target==null){callback.complete(null,"Printer history is unavailable.");return;}
+        target.execute(()->{try{ActivityStore db=store;if(db==null){callback.complete(null,"Printer history is unavailable.");return;}ActivityBurst burst=db.loadBurst(ref.printerId,ref.burstId);callback.complete(burst!=null&&burst.ref.sequence==ref.sequence?burst:null,null);}catch(RuntimeException e){failure=e;callback.complete(null,"Could not load printer activity.");}});
+    }
     public static void loadLatest(String ip,String mac,LatestCallback callback){
         ExecutorService target=worker;if(target==null){callback.complete(null,"Printer history is unavailable.");return;}
         target.execute(()->{try{ActivityStore db=store;if(db==null){callback.complete(null,"Printer history is unavailable.");return;}

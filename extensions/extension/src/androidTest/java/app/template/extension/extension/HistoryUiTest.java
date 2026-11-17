@@ -14,10 +14,17 @@ public final class HistoryUiTest {
         if(view instanceof ViewGroup){ViewGroup group=(ViewGroup)view;for(int i=0;i<group.getChildCount();i++)if(contains(group.getChildAt(i),text))return true;}
         return false;
     }
+    private static View find(View view,String text){
+        if(view instanceof TextView&&((TextView)view).getText().toString().contains(text))return view;
+        if(view instanceof ViewGroup){ViewGroup group=(ViewGroup)view;for(int i=0;i<group.getChildCount();i++){View found=find(group.getChildAt(i),text);if(found!=null)return found;}}return null;
+    }
     public static void run(Instrumentation instrumentation,Context context)throws Exception{
         ActivityStore store=new ActivityStore(context);String ip="192.0.2.88",mac="02:01:02:03:04:08";
         PrinterRecord printer=store.resolveVerified(ip,mac,"Synthetic printer");long sequence=store.reserveSequences(1);
-        ActivityBurst burst=new ActivityBurst(new ActivityBurst.Ref(printer.id,"ui-test-burst",sequence),1,1000,Collections.<RequestRecord>emptyList());
+        RequestRecord.Details details=new RequestRecord.Details("192.0.2.88",161,0,1,1000,1,"context","encoded","success",75000000L);
+        RequestRecord request=new RequestRecord("row",0,"1.3.6.1.2.1.1.1.0",0,1000000L,true,"octets:QnJvdGhlcg==".getBytes(java.nio.charset.StandardCharsets.UTF_8),details);
+        RequestRecord language=new RequestRecord("language",1,"1.3.6.1.2.1.43.15.1.1.2.1.1",1000001L,2000000L,true,"integer:6".getBytes(java.nio.charset.StandardCharsets.UTF_8),details);
+        ActivityBurst burst=new ActivityBurst(new ActivityBurst.Ref(printer.id,"ui-test-burst",sequence),1,2000000L,java.util.Arrays.asList(request,language),ip,new ActivityBurst.Coverage(true,true,2,2));
         if(!store.publish(burst,store.registerPrinter(printer.id)))throw new AssertionError("could not create history fixture");store.close();
         Intent intent=new Intent(context,ActivityHistoryActivity.class).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         intent.putExtra("printer_ip",ip);intent.putExtra("printer_mac",mac);
@@ -29,14 +36,13 @@ public final class HistoryUiTest {
         }
         boolean[] exportVisible={false},timeVisible={false};String time=java.text.DateFormat.getDateTimeInstance(java.text.DateFormat.MEDIUM,java.text.DateFormat.MEDIUM).format(new java.util.Date(burst.startedWallMillis));
         instrumentation.runOnMainSync(()->{exportVisible[0]=contains(activity.getWindow().getDecorView(),"Export activity history");timeVisible[0]=contains(activity.getWindow().getDecorView(),time);});
-        RequestRecord.Details details=new RequestRecord.Details("192.0.2.88",161,0,1,1000,1,"context","encoded","success",75000000L);
-        RequestRecord request=new RequestRecord("row",0,"1.3.6.1.2.1.1.1.0",0,1000000L,true,"octets:QnJvdGhlcg==".getBytes(java.nio.charset.StandardCharsets.UTF_8),details);
-        RequestRecord language=new RequestRecord("language",1,"1.3.6.1.2.1.43.15.1.1.2.1.1",1000001L,2000000L,true,"integer:6".getBytes(java.nio.charset.StandardCharsets.UTF_8),details);
-        ActivityBurst example=new ActivityBurst(new ActivityBurst.Ref(printer.id,"row-example",sequence),1,2000000L,java.util.Arrays.asList(request,language));
-        android.app.AlertDialog[] dialog={null};java.lang.reflect.Method method=ActivityHistoryActivity.class.getDeclaredMethod("showRequests",ActivityBurst.class);method.setAccessible(true);
-        instrumentation.runOnMainSync(()->{try{dialog[0]=(android.app.AlertDialog)method.invoke(activity,example);}catch(Exception e){throw new RuntimeException(e);}});instrumentation.waitForIdleSync();
-        boolean[] rowVisible={false};instrumentation.runOnMainSync(()->rowVisible[0]=contains(dialog[0].getWindow().getDecorView(),"System description")&&contains(dialog[0].getWindow().getDecorView(),"Brother")&&contains(dialog[0].getWindow().getDecorView(),"0.000 s · ~75 ms")&&contains(dialog[0].getWindow().getDecorView(),"0.075 s · ~75 ms")&&contains(dialog[0].getWindow().getDecorView(),"6 (PostScript)"));
-        instrumentation.runOnMainSync(()->dialog[0].dismiss());if(!rowVisible[0])throw new AssertionError("request list must show sequential timings, name and response");
+        View[] selected={null};instrumentation.runOnMainSync(()->selected[0]=find(activity.getWindow().getDecorView(),"Burst #"+sequence));
+        if(selected[0]==null)throw new AssertionError("burst button missing");instrumentation.runOnMainSync(()->selected[0].performClick());instrumentation.waitForIdleSync();
+        boolean[] screen={false};instrumentation.runOnMainSync(()->screen[0]=contains(activity.getWindow().getDecorView(),"Request activity")&&contains(activity.getWindow().getDecorView(),"System description")&&contains(activity.getWindow().getDecorView(),"Brother")&&contains(activity.getWindow().getDecorView(),"0.000 s")&&contains(activity.getWindow().getDecorView(),"~75 ms")&&contains(activity.getWindow().getDecorView(),"0.075 s")&&contains(activity.getWindow().getDecorView(),"6 (PostScript)"));
+        if(!screen[0])throw new AssertionError("clicking a burst should show the full request screen with names, values and timings");
+        android.os.Bundle saved=new android.os.Bundle();instrumentation.runOnMainSync(()->instrumentation.callActivityOnSaveInstanceState(activity,saved));
+        if(!"ui-test-burst".equals(saved.getString("burst_id"))||saved.getLong("burst_sequence")!=sequence)throw new AssertionError("screen state must retain the exact selected burst");
+        instrumentation.runOnMainSync(activity::onBackPressed);instrumentation.waitForIdleSync();
         instrumentation.runOnMainSync(activity::finish);
         if(!visible[0]||!exportVisible[0]||!timeVisible[0])throw new AssertionError("history screen must show burst, export action and seconds");
     }

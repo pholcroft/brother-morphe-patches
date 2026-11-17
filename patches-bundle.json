@@ -1,6 +1,6 @@
 {
-  "created_at": "2026-11-17T19:07:52",
-  "description": "Show a sequential estimated uncached timeline for recorded requests.",
-  "download_url": "https://raw.githubusercontent.com/pholcroft/brother-morphe-patches/dev/patches-0.2.2-dev.4.mpp",
-  "version": "0.2.2-dev.4"
+  "created_at": "2026-11-17T19:52:38",
+  "description": "Open recorded requests in a full-screen activity view.",
+  "download_url": "https://raw.githubusercontent.com/pholcroft/brother-morphe-patches/dev/patches-0.2.2-dev.5.mpp",
+  "version": "0.2.2-dev.5"
 }

@@ -23,6 +23,9 @@ public final class HistoryRuntimeTest {
         for(int i=0;i<100&&saved==null;i++){id=reader.findPrinterIdByMac(mac);if(id!=null)saved=reader.latestBurst(id);if(saved==null)Thread.sleep(50);}
         if(saved==null||saved.requests().size()!=1||saved.requests().get(0).details.contextId.contains("private-test-community"))
             throw new AssertionError("verified burst must be persisted without its community string");
+        java.util.concurrent.CountDownLatch burstLoaded=new java.util.concurrent.CountDownLatch(1);final ActivityBurst[] restored={null};
+        HistoryRuntime.loadBurst(saved.ref,(burst,error)->{restored[0]=burst;burstLoaded.countDown();});
+        if(!burstLoaded.await(5,java.util.concurrent.TimeUnit.SECONDS)||restored[0]==null||restored[0].ref.sequence!=saved.ref.sequence)throw new AssertionError("restore the exact selected activity");
         if(!"private-test-community".equals(HistoryRuntime.prepareReplay(saved).specs.get(0).community))
             throw new AssertionError("a verified live context should enable replay without persisting credentials");
         HistoryRuntime.verifyCache(address,mac);
