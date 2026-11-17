@@ -134,9 +134,22 @@ public final class CacheSettingsActivity extends Activity {
         HistoryRuntime.loadHistory(ip,savedMac,(printer,bursts,error)->replayHandler.post(()->{if(printer!=null&&printer.name!=null&&!printer.name.isEmpty()&&name.isAttachedToWindow())name.setText(printer.name);}));
         header.addView(details,new LinearLayout.LayoutParams(0,ViewGroup.LayoutParams.WRAP_CONTENT,1));
         TextView menu=text("⋮",24,TEXT);menu.setGravity(Gravity.CENTER);menu.setContentDescription("Printer options for "+ip);menu.setOnClickListener(v->printerMenu(v,ip,name.getText().toString(),shown[0]));header.addView(menu,new LinearLayout.LayoutParams(dp(48),dp(48)));card.addView(header);
-        TextView timings=text("Loading activity...",12,MUTED);timings.setPadding(0,dp(8),dp(8),0);card.addView(timings);
-        Runnable load=()->{long generation=AutoCache.generation();HistoryRuntime.loadLatest(ip,AutoCache.readString("mac|"+ip,""),(burst,error)->replayHandler.post(()->{if(isFinishing()||isDestroyed()||generation!=AutoCache.generation()||!timings.isAttachedToWindow())return;shown[0]=burst;timings.setText(error==null?BurstSummary.card(burst):"Activity unavailable");}));};
-        timings.post(load);timings.postDelayed(load,3500);
+        LinearLayout activity=new LinearLayout(this);activity.setOrientation(LinearLayout.VERTICAL);activity.setPadding(0,dp(14),dp(8),0);card.addView(activity);
+        TextView headline=text("Loading activity...",25,TEXT);headline.setTypeface(null,Typeface.BOLD);activity.addView(headline);
+        TextView label=text("",13,MUTED);activity.addView(label);
+        TextView comparison=text("",14,TEXT);comparison.setPadding(0,dp(8),0,0);activity.addView(comparison);
+        LinearLayout counts=new LinearLayout(this);counts.setOrientation(LinearLayout.HORIZONTAL);counts.setPadding(0,dp(12),0,0);activity.addView(counts);
+        LinearLayout hitColumn=new LinearLayout(this);hitColumn.setOrientation(LinearLayout.VERTICAL);counts.addView(hitColumn,new LinearLayout.LayoutParams(0,ViewGroup.LayoutParams.WRAP_CONTENT,1));
+        TextView hitLabel=text("Cache hits",13,MUTED),hitCount=text("-",22,TEXT);hitCount.setTypeface(null,Typeface.BOLD);hitColumn.addView(hitLabel);hitColumn.addView(hitCount);
+        LinearLayout liveColumn=new LinearLayout(this);liveColumn.setOrientation(LinearLayout.VERTICAL);counts.addView(liveColumn,new LinearLayout.LayoutParams(0,ViewGroup.LayoutParams.WRAP_CONTENT,1));
+        TextView liveLabel=text("Live requests",13,MUTED),liveCount=text("-",22,TEXT);liveCount.setTypeface(null,Typeface.BOLD);liveColumn.addView(liveLabel);liveColumn.addView(liveCount);
+        counts.setVisibility(View.GONE);
+        Runnable load=()->{long generation=AutoCache.generation();HistoryRuntime.loadLatest(ip,AutoCache.readString("mac|"+ip,""),(burst,error)->replayHandler.post(()->{
+            if(isFinishing()||isDestroyed()||generation!=AutoCache.generation()||!activity.isAttachedToWindow())return;shown[0]=burst;
+            if(error!=null||burst==null){headline.setText(error==null?"No activity recorded":"Activity unavailable");label.setText("");comparison.setText("");counts.setVisibility(View.GONE);return;}
+            BurstSummary.Metrics metrics=BurstSummary.calculate(burst);headline.setText(metrics.headline());label.setText(metrics.complete?"estimated request time saved on "+(metrics.hits+metrics.misses)+" requests · Burst #"+burst.ref.sequence:"Burst #"+burst.ref.sequence);comparison.setText(metrics.comparison());hitCount.setText(Integer.toString(metrics.hits));liveCount.setText(Integer.toString(metrics.misses));counts.setVisibility(View.VISIBLE);
+        }));};
+        activity.post(load);activity.postDelayed(load,3500);
         return card;
     }
     private void render(){

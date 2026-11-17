@@ -1,6 +1,6 @@
 {
-  "created_at": "2026-11-17T00:08:11",
-  "description": "Display printer details and show progress during uncached replay.",
-  "download_url": "https://raw.githubusercontent.com/pholcroft/brother-morphe-patches/dev/patches-0.2.1-dev.4.mpp",
-  "version": "0.2.1-dev.4"
+  "created_at": "2026-11-17T00:14:41",
+  "description": "Show estimated request time saved and cache activity prominently.",
+  "download_url": "https://raw.githubusercontent.com/pholcroft/brother-morphe-patches/dev/patches-0.2.1-dev.5.mpp",
+  "version": "0.2.1-dev.5"
 }
