@@ -57,6 +57,15 @@ public final class CacheSettingsActivity extends Activity {
     private final ReplayController.Listener replayListener=()->replayHandler.post(this::showReplayState);
     private final Runnable historyListener=()->replayHandler.post(()->{if(replayVisible&&!isFinishing()&&!isDestroyed())render();});
 
+    /** Draw a clear line over the full width of the old value. */
+    private static final class StrongStrikeSpan extends android.text.style.ReplacementSpan {
+        @Override public int getSize(android.graphics.Paint paint,CharSequence text,int start,int end,android.graphics.Paint.FontMetricsInt fm){return (int)Math.ceil(paint.measureText(text,start,end));}
+        @Override public void draw(android.graphics.Canvas canvas,CharSequence text,int start,int end,float x,int top,int y,int bottom,android.graphics.Paint paint){
+            canvas.drawText(text,start,end,x,y,paint);float width=paint.measureText(text,start,end),old=paint.getStrokeWidth();
+            paint.setStrokeWidth(Math.max(2f,paint.getTextSize()/10f));canvas.drawLine(x,y-paint.getTextSize()*0.32f,x+width,y-paint.getTextSize()*0.32f,paint);paint.setStrokeWidth(old);
+        }
+    }
+
     private int dp(float value){return (int)(value*getResources().getDisplayMetrics().density+0.5f);}
 
     private TextView text(String value,int size,int color){TextView t=new TextView(this);t.setText(value);t.setTextSize(size);t.setTextColor(color);return t;}
@@ -91,11 +100,11 @@ public final class CacheSettingsActivity extends Activity {
         else{ReplayEngine.Result result=outcome.result;String summary=(outcome.sequence>0?"Burst #"+outcome.sequence+"\n":"")+String.format(java.util.Locale.ROOT,"Replay time: %.2f s\nRequests replayed: %d\nChanged responses: %d",result.elapsedMs/1000.0,result.completed,result.changes.size());int routine=0;for(ReplayEngine.Change c:result.changes)if(ReplayEngine.isRoutine(c.oid))routine++;if(routine>0)summary+="\nIncludes "+routine+" normally changing uptime value(s)";if(result.uncached>0||result.unsupported>0)summary+="\nNot compared: "+(result.uncached+result.unsupported)+" requests without comparable responses";summary+="\n\nSingle-object SNMP requests were replayed in the order observed by the service. The identity check is excluded from the time. Cached data was not changed.";dialog.setTitle("Uncached replay result").setMessage(summary);if(!result.changes.isEmpty())dialog.setNeutralButton("View differences",(d,w)->{ReplayController.clearOutcome(outcome);replayResult=null;ReplayDiffActivity.setChanges(result.changes);startActivity(new Intent(this,ReplayDiffActivity.class));});}
         dialog.setPositiveButton("Close",(d,w)->{ReplayController.clearOutcome(outcome);replayResult=null;});replayResult=dialog.create();replayResult.show();
     }
-    private void printerMenu(View anchor,String ip,String printerName,ActivityBurst burst){
+    private void printerMenu(View anchor,String ip,ActivityBurst burst){
 
         PopupMenu menu=new PopupMenu(this,anchor);
 
-        menu.getMenu().add("Printer details");
+
 
 
 
@@ -106,8 +115,6 @@ public final class CacheSettingsActivity extends Activity {
         menu.getMenu().add("Clear saved data");
 
         menu.setOnMenuItemClickListener(item->{
-
-            if(item.getTitle().equals("Printer details")){String mac=AutoCache.readString("mac|"+ip,"");new AlertDialog.Builder(this).setTitle("Printer details").setMessage(printerName+"\nAddress: "+ip+"\nHardware address: "+(mac.isEmpty()?"Not recorded":mac)+(AutoCache.hasChangedAddress(ip)?"\nThis printer has been seen at another address.":"")+"\n\nThe mod checks the hardware address when the service requests it and can reuse saved responses if the printer moves to a new IP address. If the address cannot be checked, normal printer requests are used.").setPositiveButton("Close",null).show();return true;}
 
             if(item.getTitle().equals("Measure without cache")){replay(burst);return true;}
             if(item.getTitle().equals("Activity history")){Intent intent=new Intent(this,ActivityHistoryActivity.class);intent.putExtra("printer_ip",ip);intent.putExtra("printer_mac",AutoCache.readString("mac|"+ip,""));startActivity(intent);return true;}
@@ -132,7 +139,7 @@ public final class CacheSettingsActivity extends Activity {
         TextView address=text(ip+(savedMac.isEmpty()?"":"  ·  "+savedMac)+(AutoCache.hasChangedAddress(ip)?" · Address changed":""),12,MUTED);address.setPadding(0,dp(5),0,0);details.addView(address);
         HistoryRuntime.loadHistory(ip,savedMac,(printer,bursts,error)->replayHandler.post(()->{if(printer!=null&&printer.name!=null&&!printer.name.isEmpty()&&name.isAttachedToWindow())name.setText(printer.name);}));
         header.addView(details,new LinearLayout.LayoutParams(0,ViewGroup.LayoutParams.WRAP_CONTENT,1));
-        TextView menu=text("⋮",24,TEXT);menu.setGravity(Gravity.CENTER);menu.setContentDescription("Printer options for "+ip);menu.setOnClickListener(v->printerMenu(v,ip,name.getText().toString(),shown[0]));header.addView(menu,new LinearLayout.LayoutParams(dp(48),dp(48)));card.addView(header);
+        TextView menu=text("⋮",24,TEXT);menu.setGravity(Gravity.CENTER);menu.setContentDescription("Printer options for "+ip);menu.setOnClickListener(v->printerMenu(v,ip,shown[0]));header.addView(menu,new LinearLayout.LayoutParams(dp(48),dp(48)));card.addView(header);
         LinearLayout activity=new LinearLayout(this);activity.setOrientation(LinearLayout.VERTICAL);activity.setPadding(0,dp(14),dp(8),0);card.addView(activity);
         LinearLayout saving=new LinearLayout(this);saving.setOrientation(LinearLayout.HORIZONTAL);saving.setGravity(Gravity.BOTTOM);activity.addView(saving);
         TextView headline=text("Loading activity...",18,TEXT);headline.setTypeface(null,Typeface.BOLD);saving.addView(headline);
@@ -147,7 +154,7 @@ public final class CacheSettingsActivity extends Activity {
         Runnable load=()->{long generation=AutoCache.generation();HistoryRuntime.loadLatest(ip,AutoCache.readString("mac|"+ip,""),(burst,error)->replayHandler.post(()->{
             if(isFinishing()||isDestroyed()||generation!=AutoCache.generation()||!activity.isAttachedToWindow())return;shown[0]=burst;
             if(error!=null||burst==null){headline.setText(error==null?"No activity recorded":"Activity unavailable");label.setText("");comparison.setText("");counts.setVisibility(View.GONE);return;}
-            BurstSummary.Metrics metrics=BurstSummary.calculate(burst);headline.setTextSize(metrics.complete?36:18);headline.setText(metrics.headline());label.setText(metrics.complete?"saved on "+(metrics.hits+metrics.misses)+" requests":"");String comparisonText=metrics.comparison();android.text.SpannableString styled=new android.text.SpannableString(comparisonText);int arrow=comparisonText.indexOf(" → ");if(metrics.complete&&arrow>0)styled.setSpan(new android.text.style.StrikethroughSpan(),0,arrow,android.text.Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);comparison.setText(styled);hitCount.setText(Integer.toString(metrics.hits));liveCount.setText(Integer.toString(metrics.misses));counts.setVisibility(View.VISIBLE);
+            BurstSummary.Metrics metrics=BurstSummary.calculate(burst);headline.setTextSize(metrics.complete?36:18);headline.setText(metrics.headline());label.setText(metrics.complete?"saved on "+(metrics.hits+metrics.misses)+" requests":"");String comparisonText=metrics.comparison();android.text.SpannableString styled=new android.text.SpannableString(comparisonText);int arrow=comparisonText.indexOf(" → ");if(metrics.complete&&arrow>0)styled.setSpan(new StrongStrikeSpan(),0,arrow,android.text.Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);comparison.setText(styled);hitCount.setText(Integer.toString(metrics.hits));liveCount.setText(Integer.toString(metrics.misses));counts.setVisibility(View.VISIBLE);
         }));};
         activity.post(load);activity.postDelayed(load,3500);
         return card;

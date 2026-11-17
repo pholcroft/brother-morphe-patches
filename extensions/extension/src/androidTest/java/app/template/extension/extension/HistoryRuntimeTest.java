@@ -54,6 +54,14 @@ public final class HistoryRuntimeTest {
         CommunicationTiming.captureResponse(conflict,"octets:AgECAwQG");CommunicationTiming.finishAll();
         if(!HistoryRuntime.awaitIdle()||reader.findPrinterIdByMac("02:01:02:03:04:06")!=null||reader.latestBurst(id).ref.sequence!=laterSequence)
             throw new AssertionError("a conflicting identity must not be assigned to either printer");
+        CommunicationTiming.request(address,AutoCache.generation(),mac);
+        CommunicationTiming.Capture inFlight=CommunicationTiming.capture(address,new ReplayEngine.Spec("1.2.3","private-test-community",0,4,161,1000,1));
+        java.util.concurrent.CountDownLatch cleared=new java.util.concurrent.CountDownLatch(1);String[] clearError={null};
+        HistoryRuntime.clearHistory(address,mac,error->{clearError[0]=error;cleared.countDown();});
+        if(!cleared.await(5,java.util.concurrent.TimeUnit.SECONDS)||clearError[0]!=null)throw new AssertionError("history-only clear failed");
+        CommunicationTiming.captureResponse(inFlight,"integer:1");CommunicationTiming.finishAll();
+        if(!HistoryRuntime.awaitIdle()||!reader.listBursts(id).isEmpty())throw new AssertionError("cleared or in-flight bursts must not reappear");
+        if(!"integer:9".equals(reader.getCached(id,contextId,"1.2.3")))throw new AssertionError("history-only clear must keep cached responses");
         if(!AutoCache.clearPrinter(address))throw new AssertionError("clearing history failed");
         if(HistoryRuntime.lookupCache(address,0,"private-test-community","1.2.3")!=null)throw new AssertionError("clear must invalidate the cache session");
         if(reader.findPrinterIdByMac(mac)!=null||reader.latestBurst(id)!=null)throw new AssertionError("clear must remove persisted history");

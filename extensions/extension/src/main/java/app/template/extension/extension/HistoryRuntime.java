@@ -96,6 +96,16 @@ public final class HistoryRuntime {
         try{return target.submit(()->{ReplayController.cancel();ActivityStore db=store;if(db==null)return false;db.clearAllPrinters();CONTEXTS.clearAll();return true;}).get();}
         catch(Exception e){failure=new IllegalStateException("Could not clear saved printer history",e);return false;}
     }
+    public static void clearHistory(String ip,String mac,ReplayCallback callback){
+        ExecutorService target=worker;if(target==null){callback.complete("Printer history is unavailable.");return;}
+        CommunicationTiming.discard(ip);
+        target.execute(()->{try{ActivityStore db=store;if(db==null){callback.complete("Printer history is unavailable.");return;}
+            String id=mac==null||mac.isEmpty()?db.findPrinterIdByAddress(ip):db.findPrinterIdByMac(mac);
+            if(id!=null){ReplayController.cancel();db.clearBurstHistory(id);}
+            for(Runnable listener:LISTENERS)try{listener.run();}catch(RuntimeException ignored){}
+            callback.complete(null);
+        }catch(RuntimeException e){failure=e;callback.complete("Could not clear activity history.");}});
+    }
     /** Wait for already queued history work, for lifecycle coordination and tests. */
     public static boolean awaitIdle(){ExecutorService target=worker;if(target==null)return false;try{target.submit(()->{}).get();return true;}catch(Exception e){failure=new IllegalStateException("Could not finish printer history work",e);return false;}}
     public static HistoryReplayPlan prepareReplay(ActivityBurst burst){return HistoryReplayPlan.from(burst,context->CONTEXTS.get(burst.ref.printerId,context));}

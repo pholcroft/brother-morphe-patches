@@ -105,6 +105,7 @@ public final class ActivityStore extends SQLiteOpenHelper implements CacheCoordi
     @Override public java.util.Map<String,String> load(String id,String contextId){return loadCache(id,contextId);}
     @Override public boolean write(String id,String contextId,String oid,String value,long generation){return putCached(id,contextId,oid,value,generation);}
     @Override public void clear(String id){clearPrinter(id);}
+    public void clearBurstHistory(String id){if(id==null)throw new IllegalArgumentException();getWritableDatabase().delete("bursts","printer_id=?",new String[]{id});}
     public void clearPrinter(String id){SQLiteDatabase db=getWritableDatabase();db.beginTransaction();try{db.delete("bursts","printer_id=?",new String[]{id});db.delete("cache_entries","printer_id=?",new String[]{id});db.delete("addresses","printer_id=?",new String[]{id});db.delete("identities","printer_id=?",new String[]{id});db.execSQL("UPDATE printers SET active=0,generation=generation+1 WHERE id=?",new Object[]{id});db.setTransactionSuccessful();}finally{db.endTransaction();}}
     public void clearAllPrinters(){SQLiteDatabase db=getWritableDatabase();db.beginTransaction();try{
         db.delete("bursts",null,null);db.delete("cache_entries",null,null);db.delete("addresses",null,null);db.delete("identities",null,null);

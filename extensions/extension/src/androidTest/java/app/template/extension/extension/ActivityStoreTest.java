@@ -43,6 +43,12 @@ public final class ActivityStoreTest {
                 && saved.requests().get(0).details.requestId==3 && saved.coverage.requestsComplete);
         ReplayRun savedReplay=store.latestReplay(saved.ref);
         assertTrue(savedReplay!=null && savedReplay.source.sequence==1 && savedReplay.results().get(0).response()[0]==43);
+        store.putCached("printer","ctx","1.2.9","integer:1",generation);
+        store.clearBurstHistory("printer");
+        assertTrue(store.listBursts("printer").isEmpty() && store.latestReplay(burst.ref)==null);
+        assertTrue("integer:1".equals(store.getCached("printer","ctx","1.2.9")));
+        assertFalse(store.saveReplay(replay));
+        assertTrue(store.publish(newer,generation));
         store.clearPrinter("printer");
         assertFalse(store.hasBurst("printer", "burst"));
         assertTrue(store.latestReplay(burst.ref)==null && !store.saveReplay(replay));
