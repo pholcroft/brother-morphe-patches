@@ -128,26 +128,27 @@ public final class CacheSettingsActivity extends Activity {
         LinearLayout header=new LinearLayout(this);header.setOrientation(LinearLayout.HORIZONTAL);header.setGravity(Gravity.CENTER_VERTICAL);
         LinearLayout details=new LinearLayout(this);details.setOrientation(LinearLayout.VERTICAL);
         TextView name=text(AutoCache.printerName(ip),17,TEXT);name.setTypeface(null,Typeface.BOLD);details.addView(name);
-        TextView address=text(ip+(AutoCache.hasChangedAddress(ip)?" · Address changed":""),14,MUTED);address.setPadding(0,dp(5),0,0);details.addView(address);
         String savedMac=AutoCache.readString("mac|"+ip,"");
-        if(!savedMac.isEmpty()){TextView hardware=text(savedMac,12,MUTED);hardware.setPadding(0,dp(3),0,0);details.addView(hardware);}
+        TextView address=text(ip+(savedMac.isEmpty()?"":"  ·  "+savedMac)+(AutoCache.hasChangedAddress(ip)?" · Address changed":""),12,MUTED);address.setPadding(0,dp(5),0,0);details.addView(address);
         HistoryRuntime.loadHistory(ip,savedMac,(printer,bursts,error)->replayHandler.post(()->{if(printer!=null&&printer.name!=null&&!printer.name.isEmpty()&&name.isAttachedToWindow())name.setText(printer.name);}));
         header.addView(details,new LinearLayout.LayoutParams(0,ViewGroup.LayoutParams.WRAP_CONTENT,1));
         TextView menu=text("⋮",24,TEXT);menu.setGravity(Gravity.CENTER);menu.setContentDescription("Printer options for "+ip);menu.setOnClickListener(v->printerMenu(v,ip,name.getText().toString(),shown[0]));header.addView(menu,new LinearLayout.LayoutParams(dp(48),dp(48)));card.addView(header);
         LinearLayout activity=new LinearLayout(this);activity.setOrientation(LinearLayout.VERTICAL);activity.setPadding(0,dp(14),dp(8),0);card.addView(activity);
-        TextView headline=text("Loading activity...",25,TEXT);headline.setTypeface(null,Typeface.BOLD);activity.addView(headline);
-        TextView label=text("",13,MUTED);activity.addView(label);
-        TextView comparison=text("",14,TEXT);comparison.setPadding(0,dp(8),0,0);activity.addView(comparison);
+        LinearLayout saving=new LinearLayout(this);saving.setOrientation(LinearLayout.HORIZONTAL);saving.setGravity(Gravity.BOTTOM);activity.addView(saving);
+        TextView headline=text("Loading activity...",18,TEXT);headline.setTypeface(null,Typeface.BOLD);saving.addView(headline);
+        TextView label=text("",14,MUTED);label.setPadding(dp(8),0,0,dp(3));saving.addView(label,new LinearLayout.LayoutParams(0,ViewGroup.LayoutParams.WRAP_CONTENT,1));
+        TextView comparison=text("",16,TEXT);comparison.setPadding(0,dp(8),0,0);activity.addView(comparison);
+        TextView explanation=text("",11,MUTED);explanation.setPadding(0,dp(3),0,0);activity.addView(explanation);
         LinearLayout counts=new LinearLayout(this);counts.setOrientation(LinearLayout.HORIZONTAL);counts.setPadding(0,dp(12),0,0);activity.addView(counts);
-        LinearLayout hitColumn=new LinearLayout(this);hitColumn.setOrientation(LinearLayout.VERTICAL);counts.addView(hitColumn,new LinearLayout.LayoutParams(0,ViewGroup.LayoutParams.WRAP_CONTENT,1));
-        TextView hitLabel=text("Cache hits",13,MUTED),hitCount=text("-",22,TEXT);hitCount.setTypeface(null,Typeface.BOLD);hitColumn.addView(hitLabel);hitColumn.addView(hitCount);
-        LinearLayout liveColumn=new LinearLayout(this);liveColumn.setOrientation(LinearLayout.VERTICAL);counts.addView(liveColumn,new LinearLayout.LayoutParams(0,ViewGroup.LayoutParams.WRAP_CONTENT,1));
-        TextView liveLabel=text("Live requests",13,MUTED),liveCount=text("-",22,TEXT);liveCount.setTypeface(null,Typeface.BOLD);liveColumn.addView(liveLabel);liveColumn.addView(liveCount);
+        LinearLayout hitColumn=new LinearLayout(this);hitColumn.setOrientation(LinearLayout.VERTICAL);hitColumn.setPadding(dp(12),dp(9),dp(12),dp(9));hitColumn.setBackground(rounded(0xfff2f2f2,0,8));LinearLayout.LayoutParams hitParams=new LinearLayout.LayoutParams(0,ViewGroup.LayoutParams.WRAP_CONTENT,1);hitParams.rightMargin=dp(6);counts.addView(hitColumn,hitParams);
+        TextView hitLabel=text("Cache hits",13,MUTED),hitCount=text("-",26,TEXT);hitCount.setTypeface(null,Typeface.BOLD);hitColumn.addView(hitLabel);hitColumn.addView(hitCount);
+        LinearLayout liveColumn=new LinearLayout(this);liveColumn.setOrientation(LinearLayout.VERTICAL);liveColumn.setPadding(dp(12),dp(9),dp(12),dp(9));liveColumn.setBackground(rounded(0xfff2f2f2,0,8));LinearLayout.LayoutParams liveParams=new LinearLayout.LayoutParams(0,ViewGroup.LayoutParams.WRAP_CONTENT,1);liveParams.leftMargin=dp(6);counts.addView(liveColumn,liveParams);
+        TextView liveLabel=text("Misses",13,MUTED),liveCount=text("-",26,TEXT);liveCount.setTypeface(null,Typeface.BOLD);liveColumn.addView(liveLabel);liveColumn.addView(liveCount);
         counts.setVisibility(View.GONE);
         Runnable load=()->{long generation=AutoCache.generation();HistoryRuntime.loadLatest(ip,AutoCache.readString("mac|"+ip,""),(burst,error)->replayHandler.post(()->{
             if(isFinishing()||isDestroyed()||generation!=AutoCache.generation()||!activity.isAttachedToWindow())return;shown[0]=burst;
-            if(error!=null||burst==null){headline.setText(error==null?"No activity recorded":"Activity unavailable");label.setText("");comparison.setText("");counts.setVisibility(View.GONE);return;}
-            BurstSummary.Metrics metrics=BurstSummary.calculate(burst);headline.setText(metrics.headline());label.setText(metrics.complete?"estimated request time saved on "+(metrics.hits+metrics.misses)+" requests · Burst #"+burst.ref.sequence:"Burst #"+burst.ref.sequence);comparison.setText(metrics.comparison());hitCount.setText(Integer.toString(metrics.hits));liveCount.setText(Integer.toString(metrics.misses));counts.setVisibility(View.VISIBLE);
+            if(error!=null||burst==null){headline.setText(error==null?"No activity recorded":"Activity unavailable");label.setText("");comparison.setText("");explanation.setText("");counts.setVisibility(View.GONE);return;}
+            BurstSummary.Metrics metrics=BurstSummary.calculate(burst);headline.setTextSize(metrics.complete?36:18);headline.setText(metrics.headline());label.setText(metrics.complete?"saved on "+(metrics.hits+metrics.misses)+" requests":"");String comparisonText=metrics.comparison();android.text.SpannableString styled=new android.text.SpannableString(comparisonText);int arrow=comparisonText.indexOf(" → ");if(metrics.complete&&arrow>0)styled.setSpan(new android.text.style.StrikethroughSpan(),0,arrow,android.text.Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);comparison.setText(styled);explanation.setText("Estimated request time · Burst #"+burst.ref.sequence);hitCount.setText(Integer.toString(metrics.hits));liveCount.setText(Integer.toString(metrics.misses));counts.setVisibility(View.VISIBLE);
         }));};
         activity.post(load);activity.postDelayed(load,3500);
         return card;

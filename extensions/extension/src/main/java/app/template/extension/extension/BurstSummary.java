@@ -6,8 +6,8 @@ public final class BurstSummary {
     public static final class Metrics {
         public final int hits,misses,matched;public final long actualRequestNanos,withoutCacheNanos,savedNanos;public final boolean complete;
         private Metrics(int h,int m,int matched,long actual,long baseline,long saved,boolean complete){this.hits=h;this.misses=m;this.matched=matched;this.actualRequestNanos=actual;this.withoutCacheNanos=baseline;this.savedNanos=saved;this.complete=complete;}
-        public String headline(){if(!complete)return "Estimate unavailable";return String.format(Locale.ROOT,"~%.2f s",savedNanos/1e9);}
-        public String comparison(){if(!complete)return "Not enough timing data for this activity";if(withoutCacheNanos==0)return "Estimated request time without cache: 0.00 s";long percent=Math.min(100,Math.round(100.0*savedNanos/withoutCacheNanos));return String.format(Locale.ROOT,"~%.2f s → %.2f s · %d%% less request time",withoutCacheNanos/1e9,actualRequestNanos/1e9,percent);}
+        public String headline(){if(!complete)return "Estimate unavailable";return String.format(Locale.ROOT,"~%.2fs",savedNanos/1e9);}
+        public String comparison(){if(!complete)return "Not enough timing data for this activity";if(withoutCacheNanos==0)return "Estimated request time without cache: 0.00 s";long percent=Math.min(100,Math.round(100.0*savedNanos/withoutCacheNanos));return String.format(Locale.ROOT,"~%.2fs → %.2fs · %d%% faster",withoutCacheNanos/1e9,actualRequestNanos/1e9,percent);}
     }
     public static Metrics calculate(ActivityBurst burst){
         if(burst==null)return null;int hits=0,misses=0,matched=0;long actual=0,baseline=0;
