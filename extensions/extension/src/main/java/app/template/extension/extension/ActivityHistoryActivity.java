@@ -9,7 +9,6 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.view.ViewGroup;
-import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
@@ -23,7 +22,7 @@ public final class ActivityHistoryActivity extends Activity {
     private static final int EXPORT=76;
     private final Handler main=new Handler(Looper.getMainLooper());
     private LinearLayout content;
-    private boolean viewingRequests;private ActivityBurst.Ref selectedRef;
+    private boolean viewingRequests;private boolean historyAvailable;private ActivityBurst.Ref selectedRef;
     private int dp(float n){return (int)(n*getResources().getDisplayMetrics().density+0.5f);}
     private TextView text(String value,int size,int color){TextView view=new TextView(this);view.setText(value);view.setTextSize(size);view.setTextColor(color);return view;}
     @Override public void onCreate(Bundle state){super.onCreate(state);requestWindowFeature(android.view.Window.FEATURE_NO_TITLE);setTitle("Activity history");
@@ -35,12 +34,14 @@ public final class ActivityHistoryActivity extends Activity {
     @Override protected void onSaveInstanceState(Bundle state){super.onSaveInstanceState(state);if(viewingRequests&&selectedRef!=null){state.putString("printer_id",selectedRef.printerId);state.putString("burst_id",selectedRef.burstId);state.putLong("burst_sequence",selectedRef.sequence);}}
     @Override public void onBackPressed(){if(viewingRequests){viewingRequests=false;selectedRef=null;showHistoryScreen();}else super.onBackPressed();}
     private void showHistoryScreen(){
+        historyAvailable=false;
         LinearLayout root=new LinearLayout(this);root.setOrientation(LinearLayout.VERTICAL);root.setBackgroundColor(Color.WHITE);getWindow().setStatusBarColor(0xff182a43);
-        getWindow().getDecorView().setSystemUiVisibility(getWindow().getDecorView().getSystemUiVisibility() & ~android.view.View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR);
+        getWindow().getDecorView().setSystemUiVisibility(getWindow().getDecorView().getSystemUiVisibility() | android.view.View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR);
         root.setOnApplyWindowInsetsListener((v,i)->{v.setPadding(i.getSystemWindowInsetLeft(),i.getSystemWindowInsetTop(),i.getSystemWindowInsetRight(),i.getSystemWindowInsetBottom());return i.consumeSystemWindowInsets();});
         LinearLayout header=new LinearLayout(this);header.setGravity(android.view.Gravity.CENTER_VERTICAL);header.setBackgroundColor(0xff182a43);root.addView(header);
         TextView back=text("\u2039",32,Color.WHITE);back.setGravity(android.view.Gravity.CENTER);back.setContentDescription("Back");back.setOnClickListener(v->onBackPressed());header.addView(back,new LinearLayout.LayoutParams(dp(56),dp(56)));
         TextView title=text("Activity history",20,Color.WHITE);title.setTypeface(null,Typeface.BOLD);header.addView(title,new LinearLayout.LayoutParams(0,ViewGroup.LayoutParams.WRAP_CONTENT,1));
+        TextView menu=text("\u22ee",26,Color.WHITE);menu.setGravity(android.view.Gravity.CENTER);menu.setContentDescription("History options");menu.setOnClickListener(v->{android.widget.PopupMenu popup=new android.widget.PopupMenu(this,menu);android.view.MenuItem export=popup.getMenu().add("Export activity history"),clear=popup.getMenu().add("Delete all activity");export.setEnabled(historyAvailable);clear.setEnabled(historyAvailable);popup.setOnMenuItemClickListener(item->{if(item==export)exportHistory();else if(item==clear)clearHistory();return true;});popup.show();});header.addView(menu,new LinearLayout.LayoutParams(dp(48),dp(56)));
         ScrollView scroll=new ScrollView(this);content=new LinearLayout(this);content.setOrientation(LinearLayout.VERTICAL);content.setPadding(dp(20),dp(20),dp(20),dp(20));content.setBackgroundColor(Color.WHITE);scroll.addView(content);root.addView(scroll,new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,0,1));setContentView(root);
         content.addView(text("Loading activity...",16,0xff666666));loadHistory();
     }
@@ -49,15 +50,19 @@ public final class ActivityHistoryActivity extends Activity {
         HistoryRuntime.clearHistory(getIntent().getStringExtra("printer_ip"),getIntent().getStringExtra("printer_mac"),error->main.post(()->{if(isFinishing()||isDestroyed())return;if(error!=null)new AlertDialog.Builder(this).setTitle("Unable to delete history").setMessage(error).setPositiveButton("OK",null).show();loadHistory();}));
     }).show();}
     private void showHistory(PrinterRecord printer,List<ActivityBurst> bursts,String error){
-        content.removeAllViews();if(error!=null){content.addView(text(error,16,0xff666666));return;}
-        if(printer!=null){TextView heading=text(printer.name==null?"Saved printer":printer.name,20,0xff212121);heading.setTypeface(null,Typeface.BOLD);content.addView(heading);}
-        if(bursts==null||bursts.isEmpty()){content.addView(text("No saved activity yet.",16,0xff666666));return;}
-        Button export=new Button(this);export.setAllCaps(false);export.setText("Export activity history");export.setOnClickListener(v->exportHistory());content.addView(export,new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,ViewGroup.LayoutParams.WRAP_CONTENT));
-        Button clear=new Button(this);clear.setAllCaps(false);clear.setText("Delete all activity");clear.setOnClickListener(v->clearHistory());content.addView(clear,new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,ViewGroup.LayoutParams.WRAP_CONTENT));
-        for(ActivityBurst burst:bursts){Button button=new Button(this);String when=DateFormat.getDateTimeInstance(DateFormat.MEDIUM,DateFormat.MEDIUM).format(new Date(burst.startedWallMillis));
-            button.setAllCaps(false);button.setText(String.format(Locale.ROOT,"Burst #%d · %.2f s · %d requests\n%s%s",burst.ref.sequence,burst.elapsedNanos/1000000000.0,burst.requests().size(),when,burst.coverage.requestsComplete?"":" · Incomplete"));
-            button.setOnClickListener(v->showRequests(burst));content.addView(button,new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,ViewGroup.LayoutParams.WRAP_CONTENT));}
+        content.removeAllViews();historyAvailable=error==null&&bursts!=null&&!bursts.isEmpty();if(error!=null){content.addView(text(error,16,0xff666666));return;}
+        if(printer!=null){String printerName=printer.name==null||printer.name.isEmpty()?"Saved printer":printer.name;TextView heading=text(printerName,20,0xff212121);heading.setTypeface(null,Typeface.BOLD);heading.setPadding(0,0,0,dp(12));content.addView(heading);}
+        if(!historyAvailable){TextView empty=text("No saved activity yet.",16,0xff666666);empty.setPadding(0,dp(8),0,0);content.addView(empty);return;}
+        for(ActivityBurst burst:bursts){
+            LinearLayout row=new LinearLayout(this);row.setOrientation(LinearLayout.HORIZONTAL);row.setGravity(android.view.Gravity.CENTER_VERTICAL);row.setPadding(0,dp(12),0,dp(12));row.setOnClickListener(v->showRequests(burst));
+            LinearLayout labels=new LinearLayout(this);labels.setOrientation(LinearLayout.VERTICAL);TextView name=text("Burst #"+burst.ref.sequence,17,0xff212121);name.setTypeface(null,Typeface.BOLD);labels.addView(name);
+            String when=DateFormat.getDateTimeInstance(DateFormat.MEDIUM,DateFormat.MEDIUM).format(new Date(burst.startedWallMillis));labels.addView(text(when,14,0xff343c47));
+            labels.addView(text(String.format(Locale.ROOT,"%.2f s · %d requests%s",burst.elapsedNanos/1000000000.0,burst.requests().size(),burst.coverage.requestsComplete?"":" · Incomplete"),14,0xff666666));row.addView(labels,new LinearLayout.LayoutParams(0,ViewGroup.LayoutParams.WRAP_CONTENT,1));
+            TextView arrow=text("\u203a",26,0xff212121);arrow.setGravity(android.view.Gravity.CENTER);row.addView(arrow,new LinearLayout.LayoutParams(dp(32),ViewGroup.LayoutParams.MATCH_PARENT));content.addView(row,new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,ViewGroup.LayoutParams.WRAP_CONTENT));
+            android.view.View divider=new android.view.View(this);divider.setBackgroundColor(0xffd9dfe2);content.addView(divider,new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,dp(1)));
+        }
     }
+
     private void exportHistory(){Intent intent=new Intent(Intent.ACTION_CREATE_DOCUMENT);intent.addCategory(Intent.CATEGORY_OPENABLE);intent.setType("application/json");String timestamp=new java.text.SimpleDateFormat("yyyy-MM-dd_HH-mm-ss",Locale.ROOT).format(new Date());intent.putExtra(Intent.EXTRA_TITLE,"printer-activity-"+timestamp+".json");startActivityForResult(intent,EXPORT);}
     @Override protected void onActivityResult(int request,int result,Intent data){super.onActivityResult(request,result,data);if(request!=EXPORT||result!=RESULT_OK||data==null||data.getData()==null)return;
         HistoryRuntime.exportHistory(getApplicationContext(),data.getData(),getIntent().getStringExtra("printer_ip"),getIntent().getStringExtra("printer_mac"),error->main.post(()->{if(isFinishing()||isDestroyed())return;android.widget.Toast.makeText(this,error==null?"Activity saved. Review it before sharing.":error,android.widget.Toast.LENGTH_LONG).show();}));

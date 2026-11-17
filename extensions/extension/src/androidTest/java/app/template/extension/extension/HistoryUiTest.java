@@ -14,6 +14,10 @@ public final class HistoryUiTest {
         if(view instanceof ViewGroup){ViewGroup group=(ViewGroup)view;for(int i=0;i<group.getChildCount();i++)if(contains(group.getChildAt(i),text))return true;}
         return false;
     }
+    private static View findDescription(View view,String description){
+        if(description.contentEquals(view.getContentDescription()==null?"":view.getContentDescription()))return view;
+        if(view instanceof ViewGroup){ViewGroup group=(ViewGroup)view;for(int i=0;i<group.getChildCount();i++){View found=findDescription(group.getChildAt(i),description);if(found!=null)return found;}}return null;
+    }
     private static View find(View view,String text){
         if(view instanceof TextView&&((TextView)view).getText().toString().contains(text))return view;
         if(view instanceof ViewGroup){ViewGroup group=(ViewGroup)view;for(int i=0;i<group.getChildCount();i++){View found=find(group.getChildAt(i),text);if(found!=null)return found;}}return null;
@@ -43,16 +47,17 @@ public final class HistoryUiTest {
             instrumentation.runOnMainSync(()->visible[0]=contains(activity.getWindow().getDecorView(),"Burst #"+sequence));
             if(!visible[0])Thread.sleep(50);
         }
-        boolean[] exportVisible={false},timeVisible={false};String time=java.text.DateFormat.getDateTimeInstance(java.text.DateFormat.MEDIUM,java.text.DateFormat.MEDIUM).format(new java.util.Date(burst.startedWallMillis));
-        instrumentation.runOnMainSync(()->{exportVisible[0]=contains(activity.getWindow().getDecorView(),"Export activity history");timeVisible[0]=contains(activity.getWindow().getDecorView(),time);});
+        boolean[] exportVisible={false},timeVisible={false},menuVisible={false},hasSummary={false};String time=java.text.DateFormat.getDateTimeInstance(java.text.DateFormat.MEDIUM,java.text.DateFormat.MEDIUM).format(new java.util.Date(burst.startedWallMillis));
+        instrumentation.runOnMainSync(()->{exportVisible[0]=contains(activity.getWindow().getDecorView(),"Export activity history");timeVisible[0]=contains(activity.getWindow().getDecorView(),time);menuVisible[0]=findDescription(activity.getWindow().getDecorView(),"History options")!=null;hasSummary[0]=contains(activity.getWindow().getDecorView(),"2 requests");});
+        if(exportVisible[0]||!menuVisible[0]||!hasSummary[0])throw new AssertionError("history must use a compact row and put actions in the overflow menu");
         View[] selected={null};instrumentation.runOnMainSync(()->selected[0]=find(activity.getWindow().getDecorView(),"Burst #"+sequence));
-        if(selected[0]==null)throw new AssertionError("burst button missing");instrumentation.runOnMainSync(()->selected[0].performClick());instrumentation.waitForIdleSync();
+        if(selected[0]==null)throw new AssertionError("burst row missing");instrumentation.runOnMainSync(()->{View target=selected[0];while(!target.isClickable()&&target.getParent() instanceof View)target=(View)target.getParent();target.performClick();});instrumentation.waitForIdleSync();
         boolean[] screen={false};instrumentation.runOnMainSync(()->screen[0]=contains(activity.getWindow().getDecorView(),"Request activity")&&contains(activity.getWindow().getDecorView(),"System description")&&contains(activity.getWindow().getDecorView(),"Brother")&&contains(activity.getWindow().getDecorView(),"0.000 s")&&contains(activity.getWindow().getDecorView(),"~75 ms")&&contains(activity.getWindow().getDecorView(),"0.075 s")&&contains(activity.getWindow().getDecorView(),"6 (PostScript)"));
         if(!screen[0])throw new AssertionError("clicking a burst should show the full request screen with names, values and timings");
         android.os.Bundle saved=new android.os.Bundle();instrumentation.runOnMainSync(()->instrumentation.callActivityOnSaveInstanceState(activity,saved));
         if(!"ui-test-burst".equals(saved.getString("burst_id"))||saved.getLong("burst_sequence")!=sequence)throw new AssertionError("screen state must retain the exact selected burst");
         instrumentation.runOnMainSync(activity::onBackPressed);instrumentation.waitForIdleSync();
         instrumentation.runOnMainSync(activity::finish);
-        if(!visible[0]||!exportVisible[0]||!timeVisible[0])throw new AssertionError("history screen must show burst, export action and seconds");
+        if(!visible[0]||!timeVisible[0])throw new AssertionError("history screen must show burst and seconds");
     }
 }
