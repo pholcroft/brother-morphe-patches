@@ -26,6 +26,15 @@ public final class HistoryUiTest {
         RequestRecord language=new RequestRecord("language",1,"1.3.6.1.2.1.43.15.1.1.2.1.1",1000001L,2000000L,true,"integer:6".getBytes(java.nio.charset.StandardCharsets.UTF_8),details);
         ActivityBurst burst=new ActivityBurst(new ActivityBurst.Ref(printer.id,"ui-test-burst",sequence),1,2000000L,java.util.Arrays.asList(request,language),ip,new ActivityBurst.Coverage(true,true,2,2));
         if(!store.publish(burst,store.registerPrinter(printer.id)))throw new AssertionError("could not create history fixture");store.close();
+        CacheSettingsActivity settings=(CacheSettingsActivity)instrumentation.startActivitySync(new Intent(context,CacheSettingsActivity.class).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+        java.lang.reflect.Method cardMethod=CacheSettingsActivity.class.getDeclaredMethod("printerCard",String.class);cardMethod.setAccessible(true);
+        View[] card={null};instrumentation.runOnMainSync(()->{try{card[0]=(View)cardMethod.invoke(settings,ip);}catch(Exception e){throw new RuntimeException(e);}});
+        Instrumentation.ActivityMonitor monitor=instrumentation.addMonitor(ActivityHistoryActivity.class.getName(),null,false);
+        instrumentation.runOnMainSync(()->card[0].performClick());
+        android.app.Activity opened=instrumentation.waitForMonitorWithTimeout(monitor,3000);instrumentation.removeMonitor(monitor);
+        if(opened==null)throw new AssertionError("tapping the printer card must open activity history");
+        if(!ip.equals(opened.getIntent().getStringExtra("printer_ip")))throw new AssertionError("activity history must open for the selected printer");
+        instrumentation.runOnMainSync(()->{opened.finish();settings.finish();});
         Intent intent=new Intent(context,ActivityHistoryActivity.class).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         intent.putExtra("printer_ip",ip);intent.putExtra("printer_mac",mac);
         ActivityHistoryActivity activity=(ActivityHistoryActivity)instrumentation.startActivitySync(intent);

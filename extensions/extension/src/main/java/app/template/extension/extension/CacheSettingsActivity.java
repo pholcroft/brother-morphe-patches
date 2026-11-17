@@ -110,6 +110,8 @@ public final class CacheSettingsActivity extends Activity {
         else{ReplayEngine.Result result=outcome.result;String summary=(outcome.sequence>0?"Burst #"+outcome.sequence+"\n":"")+String.format(java.util.Locale.ROOT,"Replay time: %.2f s\nRequests replayed: %d\nChanged responses: %d",result.elapsedMs/1000.0,result.completed,result.changes.size());int routine=0;for(ReplayEngine.Change c:result.changes)if(ReplayEngine.isRoutine(c.oid))routine++;if(routine>0)summary+="\nIncludes "+routine+" normally changing uptime value(s)";if(result.uncached>0||result.unsupported>0)summary+="\nNot compared: "+(result.uncached+result.unsupported)+" requests without comparable responses";summary+="\n\nSingle-object SNMP requests were replayed in the order observed by the service. The identity check is excluded from the time. Cached data was not changed.";dialog.setTitle("Uncached replay result").setMessage(summary);if(!result.changes.isEmpty())dialog.setNeutralButton("View differences",(d,w)->{ReplayController.clearOutcome(outcome);replayResult=null;ReplayDiffActivity.setChanges(result.changes);startActivity(new Intent(this,ReplayDiffActivity.class));});}
         dialog.setPositiveButton("Close",(d,w)->{ReplayController.clearOutcome(outcome);replayResult=null;});replayResult=dialog.create();replayResult.show();
     }
+    private void openActivityHistory(String ip){Intent intent=new Intent(this,ActivityHistoryActivity.class);intent.putExtra("printer_ip",ip);intent.putExtra("printer_mac",AutoCache.readString("mac|"+ip,""));startActivity(intent);}
+
     private void printerMenu(View anchor,String ip,ActivityBurst burst){
 
         PopupMenu menu=new PopupMenu(this,anchor);
@@ -127,7 +129,7 @@ public final class CacheSettingsActivity extends Activity {
         menu.setOnMenuItemClickListener(item->{
 
             if(item.getTitle().equals("Measure without cache")){replay(burst);return true;}
-            if(item.getTitle().equals("Activity history")){Intent intent=new Intent(this,ActivityHistoryActivity.class);intent.putExtra("printer_ip",ip);intent.putExtra("printer_mac",AutoCache.readString("mac|"+ip,""));startActivity(intent);return true;}
+            if(item.getTitle().equals("Activity history")){openActivityHistory(ip);return true;}
 
             if(item.getTitle().equals("Clear saved data")){clearPrinter(ip);return true;}
 
@@ -141,7 +143,7 @@ public final class CacheSettingsActivity extends Activity {
 
     private View printerCard(String ip){
         final ActivityBurst[] shown={null};
-        LinearLayout card=new LinearLayout(this);card.setOrientation(LinearLayout.VERTICAL);card.setPadding(dp(16),dp(14),dp(8),dp(14));card.setBackground(rounded(Color.WHITE,0xffd1d5d8,10));
+        LinearLayout card=new LinearLayout(this);card.setOrientation(LinearLayout.VERTICAL);card.setPadding(dp(16),dp(14),dp(8),dp(14));card.setBackground(rounded(Color.WHITE,0xffd1d5d8,10));card.setOnClickListener(v->openActivityHistory(ip));
         LinearLayout header=new LinearLayout(this);header.setOrientation(LinearLayout.HORIZONTAL);header.setGravity(Gravity.CENTER_VERTICAL);
         LinearLayout details=new LinearLayout(this);details.setOrientation(LinearLayout.VERTICAL);
         TextView name=text(AutoCache.printerName(ip),17,TEXT);name.setTypeface(null,Typeface.BOLD);details.addView(name);
