@@ -1,6 +1,6 @@
 {
-  "created_at": "2026-11-18T05:04:51",
-  "description": "Prefer likely print preview activity on saved printer cards.",
-  "download_url": "https://raw.githubusercontent.com/pholcroft/brother-morphe-patches/dev/patches-0.2.2-dev.19.mpp",
-  "version": "0.2.2-dev.19"
+  "created_at": "2026-11-18T05:10:00",
+  "description": "Credit Peter Holcroft on the print service settings page.",
+  "download_url": "https://raw.githubusercontent.com/pholcroft/brother-morphe-patches/dev/patches-0.2.2-dev.20.mpp",
+  "version": "0.2.2-dev.20"
 }
