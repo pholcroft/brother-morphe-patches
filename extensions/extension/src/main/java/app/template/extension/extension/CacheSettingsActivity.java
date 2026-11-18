@@ -101,8 +101,18 @@ public final class CacheSettingsActivity extends Activity {
         header.addView(details,new LinearLayout.LayoutParams(0,ViewGroup.LayoutParams.WRAP_CONTENT,1));
         card.addView(header);
         LinearLayout activity=new LinearLayout(this);activity.setOrientation(LinearLayout.VERTICAL);activity.setPadding(0,dp(14),dp(8),0);card.addView(activity);
-        TextView headline=text("Loading activity...",18,TEXT);activity.addView(headline);
-        TextView label=text("",14,MUTED);label.setPadding(0,dp(4),0,0);activity.addView(label);
+        LinearLayout headlineRow = new LinearLayout(this);
+        headlineRow.setBaselineAligned(true);
+        activity.addView(headlineRow, new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+        TextView headline = text("Loading activity...", 18, TEXT);
+        headlineRow.addView(headline);
+        TextView label = text("", 14, MUTED);
+        LinearLayout.LayoutParams labelParams = new LinearLayout.LayoutParams(
+                0, ViewGroup.LayoutParams.WRAP_CONTENT, 1);
+        labelParams.setMarginStart(dp(10));
+        label.setVisibility(View.GONE);
+        headlineRow.addView(label, labelParams);
         TextView comparison=text("",16,TEXT);comparison.setPadding(0,dp(12),0,0);activity.addView(comparison);
         LinearLayout counts=new LinearLayout(this);counts.setOrientation(LinearLayout.HORIZONTAL);counts.setPadding(0,dp(16),0,0);activity.addView(counts);
         LinearLayout hitColumn=new LinearLayout(this);hitColumn.setOrientation(LinearLayout.VERTICAL);hitColumn.setPadding(dp(12),dp(10),dp(12),dp(10));hitColumn.setBackground(rounded(0xfff1f1f1,0,8));LinearLayout.LayoutParams hitParams=new LinearLayout.LayoutParams(0,ViewGroup.LayoutParams.WRAP_CONTENT,1);hitParams.rightMargin=dp(5);counts.addView(hitColumn,hitParams);
@@ -116,8 +126,8 @@ public final class CacheSettingsActivity extends Activity {
         counts.setVisibility(View.GONE);bar.setVisibility(View.GONE);ratio.setVisibility(View.GONE);
         Runnable load=()->{long generation=AutoCache.generation();HistoryRuntime.loadCardBurst(ip,AutoCache.readString("mac|"+ip,""),(burst,error)->replayHandler.post(()->{
             if(isFinishing()||isDestroyed()||generation!=AutoCache.generation()||!activity.isAttachedToWindow())return;
-            if(error!=null||burst==null){headline.setText(error==null?"No activity recorded":"Activity unavailable");label.setText("");comparison.setText("");counts.setVisibility(View.GONE);bar.setVisibility(View.GONE);ratio.setVisibility(View.GONE);return;}
-            BurstSummary.Metrics metrics=BurstSummary.calculate(burst);headline.setTypeface(metrics.complete?Typeface.SERIF:Typeface.DEFAULT);headline.setTextSize(metrics.complete?48:18);headline.setText(metrics.headline());label.setText(metrics.complete?"saved on "+(metrics.hits+metrics.misses)+" requests":"");String comparisonText=metrics.comparison();android.text.SpannableString styled=new android.text.SpannableString(comparisonText);int arrow=comparisonText.indexOf(" → ");if(metrics.complete&&arrow>0)styled.setSpan(new StrongStrikeSpan(),0,arrow,android.text.Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);comparison.setText(styled);hitCount.setText(Integer.toString(metrics.hits));liveCount.setText(Integer.toString(metrics.misses));counts.setVisibility(View.VISIBLE);int percent=metrics.cachePercent();if(percent>=0){bar.setCounts(metrics.hits,metrics.misses);bar.setContentDescription(percent+"% of requests served from cache");bar.setVisibility(View.VISIBLE);ratio.setText(percent+"% of requests served from cache");ratio.setVisibility(View.VISIBLE);}else{bar.setVisibility(View.GONE);ratio.setVisibility(View.GONE);}
+            if(error!=null||burst==null){headline.setText(error==null?"No activity recorded":"Activity unavailable");label.setVisibility(View.GONE);comparison.setText("");counts.setVisibility(View.GONE);bar.setVisibility(View.GONE);ratio.setVisibility(View.GONE);return;}
+            BurstSummary.Metrics metrics=BurstSummary.calculate(burst);headline.setTypeface(metrics.complete?Typeface.SERIF:Typeface.DEFAULT);headline.setTextSize(metrics.complete?48:18);headline.setText(metrics.headline());label.setText("saved on "+(metrics.hits+metrics.misses)+" requests");label.setVisibility(metrics.complete?View.VISIBLE:View.GONE);String comparisonText=metrics.comparison();android.text.SpannableString styled=new android.text.SpannableString(comparisonText);int arrow=comparisonText.indexOf(" → ");if(metrics.complete&&arrow>0)styled.setSpan(new StrongStrikeSpan(),0,arrow,android.text.Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);comparison.setText(styled);hitCount.setText(Integer.toString(metrics.hits));liveCount.setText(Integer.toString(metrics.misses));counts.setVisibility(View.VISIBLE);int percent=metrics.cachePercent();if(percent>=0){bar.setCounts(metrics.hits,metrics.misses);bar.setContentDescription(percent+"% of requests served from cache");bar.setVisibility(View.VISIBLE);ratio.setText(percent+"% of requests served from cache");ratio.setVisibility(View.VISIBLE);}else{bar.setVisibility(View.GONE);ratio.setVisibility(View.GONE);}
         }));};
         activity.post(load);activity.postDelayed(load,3500);
         return card;
