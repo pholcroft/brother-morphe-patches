@@ -62,3 +62,8 @@ patch = (root / "patches/src/main/kotlin/app/template/patches/brother/AutomaticC
 assert "ReplayDiffActivity" in patch
 assert "lookup(Ljava/lang/Object;Ljava/lang/Object;II)" in patch
 
+
+diagnostics = (root / "extensions/extension/src/main/java/app/template/extension/extension/DiagnosticsActivity.java").read_text(encoding="utf-8")
+assert "CAPTURING-PRINTER-TRAFFIC.md" not in diagnostics
+assert ".setNeutralButton(\"Read guide\"" not in diagnostics
+assert "https://github.com/pholcroft/brother-morphe-patches/issues" in diagnostics

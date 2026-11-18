@@ -16,7 +16,7 @@ Definitions live in [`data/oid-dictionary.json`](../data/oid-dictionary.json), w
 
 ## Export formats
 
-[pcapng](https://www.wireshark.org/docs/man-pages/tshark.html) is a standard format for actual captured network packets and can be opened in Wireshark. The existing [PCAPdroid guide](../CAPTURING-PRINTER-TRAFFIC.md) remains appropriate when packet-level data is needed. Our cache hits have no packets and our instrumentation does not preserve full raw SNMP packets, so turning this activity into a pcapng file would invent traffic. Continue to export the current versioned JSON for full recorded burst data, and CSV for simple event analysis. As a future interoperability experiment, evaluate [OpenTelemetry spans](https://opentelemetry.io/docs/specs/otel/trace/api/) for start/end timings and parent-child activity; do not describe that as a packet capture. Validate a sample with real tools before promising compatibility.
+[pcapng](https://www.wireshark.org/docs/man-pages/tshark.html) is a standard format for actual captured network packets and can be opened in Wireshark. Packet-level analysis requires a separate network capture tool. Our cache hits have no packets and our instrumentation does not preserve full raw SNMP packets, so turning this activity into a pcapng file would invent traffic. Continue to export the current versioned JSON for full recorded burst data, and CSV for simple event analysis. As a future interoperability experiment, evaluate [OpenTelemetry spans](https://opentelemetry.io/docs/specs/otel/trace/api/) for start/end timings and parent-child activity; do not describe that as a packet capture. Validate a sample with real tools before promising compatibility.
 
 ## Opt-in comparison concept
 
