@@ -124,7 +124,12 @@
     "symbol": "brotherAutoRotate",
     "name": "Automatic rotation support",
     "description": "Brother associates this value with automatic rotation in its common print language.",
-    "source": "https://github.com/pholcroft/brother-morphe-patches/blob/dev/docs/BROTHER-OID-EVIDENCE.md"
+    "source": "https://github.com/pholcroft/brother-morphe-patches/blob/dev/docs/BROTHER-OID-EVIDENCE.md",
+    "values": {
+      "0": "Not supported",
+      "1": "Supported"
+    },
+    "values_source": "https://github.com/pholcroft/brother-morphe-patches/blob/dev/docs/BROTHER-OID-EVIDENCE.md"
   },
   {
     "oid": "1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.69.2.2",
@@ -138,21 +143,36 @@
     "symbol": "brotherFunctionLock",
     "name": "Function lock",
     "description": "Brother uses this value when evaluating its function lock setting.",
-    "source": "https://github.com/pholcroft/brother-morphe-patches/blob/dev/docs/BROTHER-OID-EVIDENCE.md"
+    "source": "https://github.com/pholcroft/brother-morphe-patches/blob/dev/docs/BROTHER-OID-EVIDENCE.md",
+    "values": {
+      "1": "Inactive",
+      "2": "Active"
+    },
+    "values_source": "https://github.com/pholcroft/brother-morphe-patches/blob/dev/docs/BROTHER-OID-EVIDENCE.md"
   },
   {
     "oid": "1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.63.5.1.4.11",
     "symbol": "brotherPrintFunctionLock",
     "name": "Print function lock",
     "description": "Brother uses this value when evaluating the print function lock.",
-    "source": "https://github.com/pholcroft/brother-morphe-patches/blob/dev/docs/BROTHER-OID-EVIDENCE.md"
+    "source": "https://github.com/pholcroft/brother-morphe-patches/blob/dev/docs/BROTHER-OID-EVIDENCE.md",
+    "values": {
+      "0": "Locked",
+      "1": "Not locked"
+    },
+    "values_source": "https://github.com/pholcroft/brother-morphe-patches/blob/dev/docs/BROTHER-OID-EVIDENCE.md"
   },
   {
     "oid": "1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.63.5.1.4.5",
     "symbol": "brotherScanFunctionLock",
     "name": "Scan function lock",
     "description": "Brother uses this value when evaluating the scan function lock.",
-    "source": "https://github.com/pholcroft/brother-morphe-patches/blob/dev/docs/BROTHER-OID-EVIDENCE.md"
+    "source": "https://github.com/pholcroft/brother-morphe-patches/blob/dev/docs/BROTHER-OID-EVIDENCE.md",
+    "values": {
+      "0": "Locked",
+      "1": "Not locked"
+    },
+    "values_source": "https://github.com/pholcroft/brother-morphe-patches/blob/dev/docs/BROTHER-OID-EVIDENCE.md"
   },
   {
     "oid": "1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.69.1.1",
@@ -166,7 +186,12 @@
     "symbol": "brotherScanDuplex",
     "name": "Duplex scanning support",
     "description": "Brother associates this value with duplex scanning.",
-    "source": "https://github.com/pholcroft/brother-morphe-patches/blob/dev/docs/BROTHER-OID-EVIDENCE.md"
+    "source": "https://github.com/pholcroft/brother-morphe-patches/blob/dev/docs/BROTHER-OID-EVIDENCE.md",
+    "values": {
+      "0": "Not supported",
+      "1": "Supported"
+    },
+    "values_source": "https://github.com/pholcroft/brother-morphe-patches/blob/dev/docs/BROTHER-OID-EVIDENCE.md"
   },
   {
     "oid": "1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.69.1.3",
@@ -187,14 +212,24 @@
     "symbol": "brotherScanAutoCrop",
     "name": "Automatic scan cropping",
     "description": "Brother associates this value with automatic scan cropping.",
-    "source": "https://github.com/pholcroft/brother-morphe-patches/blob/dev/docs/BROTHER-OID-EVIDENCE.md"
+    "source": "https://github.com/pholcroft/brother-morphe-patches/blob/dev/docs/BROTHER-OID-EVIDENCE.md",
+    "values": {
+      "0": "Not supported",
+      "1": "Supported"
+    },
+    "values_source": "https://github.com/pholcroft/brother-morphe-patches/blob/dev/docs/BROTHER-OID-EVIDENCE.md"
   },
   {
     "oid": "1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.69.1.6",
     "symbol": "brotherScanMultiFeed",
     "name": "Scanner multi-feed",
     "description": "Brother associates this value with scanner multi-feed support.",
-    "source": "https://github.com/pholcroft/brother-morphe-patches/blob/dev/docs/BROTHER-OID-EVIDENCE.md"
+    "source": "https://github.com/pholcroft/brother-morphe-patches/blob/dev/docs/BROTHER-OID-EVIDENCE.md",
+    "values": {
+      "0": "Not supported",
+      "1": "Supported"
+    },
+    "values_source": "https://github.com/pholcroft/brother-morphe-patches/blob/dev/docs/BROTHER-OID-EVIDENCE.md"
   },
   {
     "oid": "1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.69.1.7",
@@ -397,14 +432,24 @@
     "symbol": "brotherPhoenixSupport",
     "name": "Phoenix support",
     "description": "Brother associates this value with Phoenix support; the feature is not otherwise identified.",
-    "source": "https://github.com/pholcroft/brother-morphe-patches/blob/dev/docs/BROTHER-OID-EVIDENCE.md"
+    "source": "https://github.com/pholcroft/brother-morphe-patches/blob/dev/docs/BROTHER-OID-EVIDENCE.md",
+    "values": {
+      "0": "Not supported",
+      "1": "Supported"
+    },
+    "values_source": "https://github.com/pholcroft/brother-morphe-patches/blob/dev/docs/BROTHER-OID-EVIDENCE.md"
   },
   {
     "oid": "1.3.6.1.4.1.2435.2.4.3.2435.5.39.2",
     "symbol": "brotherPhoenixEnabled",
     "name": "Phoenix enabled",
     "description": "Brother associates this value with whether Phoenix is enabled; the feature is not otherwise identified.",
-    "source": "https://github.com/pholcroft/brother-morphe-patches/blob/dev/docs/BROTHER-OID-EVIDENCE.md"
+    "source": "https://github.com/pholcroft/brother-morphe-patches/blob/dev/docs/BROTHER-OID-EVIDENCE.md",
+    "values": {
+      "0": "Disabled",
+      "1": "Enabled"
+    },
+    "values_source": "https://github.com/pholcroft/brother-morphe-patches/blob/dev/docs/BROTHER-OID-EVIDENCE.md"
   },
   {
     "oid": "1.3.6.1.4.1.2435.2.4.3.2435.5.39.3",
