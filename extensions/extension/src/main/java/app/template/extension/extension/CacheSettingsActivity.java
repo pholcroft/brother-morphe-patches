@@ -84,40 +84,11 @@ public final class CacheSettingsActivity extends Activity {
     @Override public void onResume(){super.onResume();replayVisible=true;HistoryRuntime.addListener(historyListener);if(root!=null)render();}
     @Override public void onPause(){replayVisible=false;HistoryRuntime.removeListener(historyListener);super.onPause();}
 
-    private void clearPrinter(String ip){new AlertDialog.Builder(this).setTitle("Clear saved printer data?").setMessage("Saved responses and comparison times will be removed. With the cache on, new replies are learned immediately and may be reused during the same preview. Turn the cache off in settings to use only live replies.\n\nExisting diagnostic recordings are kept separately.").setNegativeButton("Cancel",null).setPositiveButton("Clear",(d,w)->{if(!AutoCache.clearPrinter(ip))showClearFailure();render();}).show();}
-
     private void clearAll(){new AlertDialog.Builder(this).setTitle("Clear all saved printers?").setMessage("Saved responses and comparison times will be removed. With the cache on, new replies are learned immediately and may be reused during the same preview. Turn the cache off in settings to use only live replies.\n\nExisting diagnostic recordings are kept separately.").setNegativeButton("Cancel",null).setPositiveButton("Clear all",(d,w)->{if(!AutoCache.clearAll())showClearFailure();render();}).show();}
     private void showClearFailure(){new AlertDialog.Builder(this).setTitle("Unable to clear saved data").setMessage("Please try again.").setPositiveButton("OK",null).show();}
 
     private void openFixExplanation(){try{startActivity(new Intent(Intent.ACTION_VIEW,Uri.parse("https://github.com/pholcroft/brother-morphe-patches#how-it-works-and-limitations")));}catch(ActivityNotFoundException e){new AlertDialog.Builder(this).setTitle("Unable to open link").setMessage("No app is available to open the GitHub page.").setPositiveButton("OK",null).show();}}
     private void openActivityHistory(String ip){Intent intent=new Intent(this,ActivityHistoryActivity.class);intent.putExtra("printer_ip",ip);intent.putExtra("printer_mac",AutoCache.readString("mac|"+ip,""));startActivity(intent);}
-
-    private void printerMenu(View anchor,String ip){
-
-        PopupMenu menu=new PopupMenu(this,anchor);
-
-
-
-
-
-        menu.getMenu().add("Activity history");
-
-
-        menu.getMenu().add("Clear saved data");
-
-        menu.setOnMenuItemClickListener(item->{
-
-            if(item.getTitle().equals("Activity history")){openActivityHistory(ip);return true;}
-
-            if(item.getTitle().equals("Clear saved data")){clearPrinter(ip);return true;}
-
-            return false;
-
-        });
-
-        menu.show();
-
-    }
 
     private View printerCard(String ip){
         LinearLayout card=new LinearLayout(this);card.setOrientation(LinearLayout.VERTICAL);card.setPadding(dp(16),dp(14),dp(8),dp(14));card.setBackground(rounded(Color.WHITE,0xffd1d5d8,10));card.setOnClickListener(v->openActivityHistory(ip));
@@ -128,7 +99,7 @@ public final class CacheSettingsActivity extends Activity {
         TextView address=text(ip+(savedMac.isEmpty()?"":"  ·  "+savedMac)+(AutoCache.hasChangedAddress(ip)?" · Address changed":""),12,MUTED);address.setPadding(0,dp(5),0,0);details.addView(address);
         HistoryRuntime.loadHistory(ip,savedMac,(printer,bursts,error)->replayHandler.post(()->{if(printer!=null&&printer.name!=null&&!printer.name.isEmpty()&&name.isAttachedToWindow())name.setText(printer.name);}));
         header.addView(details,new LinearLayout.LayoutParams(0,ViewGroup.LayoutParams.WRAP_CONTENT,1));
-        TextView menu=text("⋮",24,TEXT);menu.setGravity(Gravity.CENTER);menu.setContentDescription("Printer options for "+ip);menu.setOnClickListener(v->printerMenu(v,ip));header.addView(menu,new LinearLayout.LayoutParams(dp(48),dp(48)));card.addView(header);
+        card.addView(header);
         LinearLayout activity=new LinearLayout(this);activity.setOrientation(LinearLayout.VERTICAL);activity.setPadding(0,dp(14),dp(8),0);card.addView(activity);
         TextView headline=text("Loading activity...",18,TEXT);activity.addView(headline);
         TextView label=text("",14,MUTED);label.setPadding(0,dp(4),0,0);activity.addView(label);

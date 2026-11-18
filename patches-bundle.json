@@ -1,6 +1,6 @@
 {
-  "created_at": "2026-11-18T02:32:21",
-  "description": "Retire the old capture guide and simplify diagnostic sharing.",
-  "download_url": "https://raw.githubusercontent.com/pholcroft/brother-morphe-patches/dev/patches-0.2.2-dev.10.mpp",
-  "version": "0.2.2-dev.10"
+  "created_at": "2026-11-18T02:56:39",
+  "description": "Show diagnostics in request activity style and simplify printer cards.",
+  "download_url": "https://raw.githubusercontent.com/pholcroft/brother-morphe-patches/dev/patches-0.2.2-dev.11.mpp",
+  "version": "0.2.2-dev.11"
 }

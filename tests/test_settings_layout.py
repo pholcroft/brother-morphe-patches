@@ -67,3 +67,8 @@ diagnostics = (root / "extensions/extension/src/main/java/app/template/extension
 assert "CAPTURING-PRINTER-TRAFFIC.md" not in diagnostics
 assert ".setNeutralButton(\"Read guide\"" not in diagnostics
 assert "https://github.com/pholcroft/brother-morphe-patches/issues" in diagnostics
+
+assert "Printer options for " not in settings
+history = (root / "extensions/extension/src/main/java/app/template/extension/extension/ActivityHistoryActivity.java").read_text(encoding="utf-8")
+assert "Clear saved printer data" in history
+assert "Delete all activity" in history

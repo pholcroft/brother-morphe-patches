@@ -32,12 +32,13 @@ public final class Diagnostics {
         if(EVENTS.size()==LIMIT){EVENTS.removeFirst();dropped++;}EVENTS.addLast(new Event(p,source,state,type,value));
     }
     public static final class RecentEvent {
-        public final String oid,source,state,type,value;public final long millis;
-        private RecentEvent(Event event){oid=event.p.oid;source=event.source;state=event.state;type=event.type;value=event.value;millis=event.millis;}
+        public final String ip,oid,source,state,type,value;public final long millis,wall,startNanos,sequence;
+        private RecentEvent(Event event){ip=event.p.ip;wall=event.p.wall;startNanos=event.p.start;sequence=event.p.sequence;oid=event.p.oid;source=event.source;state=event.state;type=event.type;value=event.value;millis=event.millis;}
     }
     public static synchronized java.util.List<RecentEvent> recentEvents(){
         java.util.ArrayList<RecentEvent> result=new java.util.ArrayList<>();java.util.Iterator<Event> iterator=EVENTS.descendingIterator();while(iterator.hasNext()&&result.size()<100)result.add(new RecentEvent(iterator.next()));return result;
     }
+    public static synchronized long firstEventStart(){long start=Long.MAX_VALUE;for(Event event:EVENTS)start=Math.min(start,event.p.start);return start==Long.MAX_VALUE?0:start;}
     private static String quote(String value){return "\""+(value==null?"":value.replace("\"","\"\""))+"\"";}
     public static synchronized String csv(){
         StringBuilder b=new StringBuilder("timestamp_unix_ms,printer_ip,burst_sequence,oid,source,result,value_type,value,duration_ms,oid_name\r\n");

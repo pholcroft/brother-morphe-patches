@@ -15,9 +15,9 @@ public final class DiagnosticsUiTest {
   View[] menu={null},button={null};i.runOnMainSync(()->{menu[0]=description(a.getWindow().getDecorView(),"Diagnostic options");button[0]=find(a.getWindow().getDecorView(),"Start recording");});
   if(menu[0]==null||button[0]==null||has(i,a,"Refresh list"))throw new AssertionError("diagnostic actions must use the compact layout");
   i.runOnMainSync(()->button[0].performClick());if(!has(i,a,"Recording")||!has(i,a,"Stop recording"))throw new AssertionError("recording controls must start recording");
-  Diagnostics.begin("192.0.2.1","1.3.6.1.2.1.1.1.0");Diagnostics.finish("printer","ok","integer","7");
+  Diagnostics.begin("192.0.2.1","1.3.6.1.2.1.1.1.0",7);Diagnostics.finish("printer","ok","integer","7");
   boolean updated=false;for(int n=0;n<40&&!updated;n++){Thread.sleep(100);updated=has(i,a,"1 request recorded");}
-  if(!updated||!has(i,a,"System description"))throw new AssertionError("recording view must update automatically with a named request");
+  if(!updated||!has(i,a,"System description")||!has(i,a,"Request / response")||!has(i,a,"7"))throw new AssertionError("recording view must display the request and response in columns");
   i.runOnMainSync(()->find(a.getWindow().getDecorView(),"Stop recording").performClick());if(Diagnostics.isRecording()||!has(i,a,"Stopped"))throw new AssertionError("recording must stop");
   android.accessibilityservice.AccessibilityServiceInfo ai=i.getUiAutomation().getServiceInfo();ai.flags|=android.accessibilityservice.AccessibilityServiceInfo.FLAG_RETRIEVE_INTERACTIVE_WINDOWS;i.getUiAutomation().setServiceInfo(ai);
   i.runOnMainSync(()->menu[0].performClick());i.waitForIdleSync();String[] actions={"Export CSV","Clear recording","About diagnostic recording","How to share"};boolean[] present=new boolean[actions.length];
