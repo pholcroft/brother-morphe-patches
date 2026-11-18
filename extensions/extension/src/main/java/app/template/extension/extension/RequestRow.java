@@ -7,11 +7,37 @@ public final class RequestRow {
     static String name(String oid) {
         OidDictionary.Entry entry = OidDictionary.lookup(oid);
         if (entry == null) return "Unknown request";
-        if ("prtInterpreterLangFamily".equals(entry.symbol) || "brotherPdlLanguage".equals(entry.symbol)) {
-            if (oid.length() == entry.oid.length()) return entry.name;
-            String[] indexes = oid.substring(entry.oid.length() + 1).split("\\.");
-            int expected = "prtInterpreterLangFamily".equals(entry.symbol) ? 2 : 1;
-            if (indexes.length == expected) return entry.name + " #" + indexes[expected - 1];
+        if (oid.length() == entry.oid.length()) return entry.name;
+        String suffix = oid.substring(entry.oid.length() + 1);
+        int separator = suffix.indexOf('.');
+        switch (entry.symbol) {
+            case "brotherPaperSize":
+            case "brotherPdlLanguage":
+            case "brotherCdLabelLanguage":
+            case "ifPhysAddress":
+            case "hrDeviceDescr":
+                if (separator < 0) return entry.name + " #" + suffix;
+                break;
+            case "prtInputName":
+            case "prtInputMediaName":
+            case "prtInputMediaType":
+            case "prtInputType":
+            case "prtOutputName":
+            case "prtMediaPathType":
+            case "prtInterpreterLangFamily":
+            case "prtInterpreterLangLevel":
+            case "prtInterpreterLangVersion":
+            case "prtMarkerMarkTech":
+            case "prtMarkerLifeCount":
+            case "prtMarkerProcessColorants":
+                if (separator > 0 && separator == suffix.lastIndexOf('.')) {
+                    // Single-printer agents normally use device index 1.
+                    String index = suffix.startsWith("1.") ? suffix.substring(separator + 1) : suffix;
+                    return entry.name + " #" + index;
+                }
+                break;
+            default:
+                break;
         }
         return entry.name;
     }
