@@ -6,7 +6,14 @@ import java.util.Locale;
 public final class RequestRow {
     static String name(String oid) {
         OidDictionary.Entry entry = OidDictionary.lookup(oid);
-        return entry == null ? "Unknown request" : entry.name;
+        if (entry == null) return "Unknown request";
+        if ("prtInterpreterLangFamily".equals(entry.symbol) || "brotherPdlLanguage".equals(entry.symbol)) {
+            if (oid.length() == entry.oid.length()) return entry.name;
+            String[] indexes = oid.substring(entry.oid.length() + 1).split("\\.");
+            int expected = "prtInterpreterLangFamily".equals(entry.symbol) ? 2 : 1;
+            if (indexes.length == expected) return entry.name + " #" + indexes[expected - 1];
+        }
+        return entry.name;
     }
 
     static String response(RequestRecord request) {

@@ -16,6 +16,12 @@ public final class RequestRowTest {
   String encoded = "octets:" + java.util.Base64.getEncoder().encodeToString(longValue.getBytes(StandardCharsets.UTF_8));
   if(!RequestRow.format(item(false,-1,encoded,RequestRecord.Outcome.SUCCESS),0,100000000L,false).endsWith(longValue))
    throw new AssertionError("saved request signatures must keep the full response for expansion and copy");
+  String[] indexes={"1.3.6.1.2.1.43.15.1.1.2.1.19","1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.70.1.1.2.19"};
+  for(String oid:indexes){
+   RequestRecord missing=new RequestRecord("m",0,oid,0,1,false,"missing:".getBytes(StandardCharsets.UTF_8));
+   if(!RequestRow.format(missing,0,1,false).endsWith("#19\nNo such object"))
+    throw new AssertionError("show table slot even for missing entries");
+  }
   String failure=RequestRow.format(item(false,-1,null,RequestRecord.Outcome.TIMEOUT),0,100000000L,false);if(!failure.contains("Timed out"))throw new AssertionError(failure);
  }
 }
