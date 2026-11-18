@@ -1,6 +1,6 @@
 {
-  "created_at": "2026-11-18T02:56:39",
-  "description": "Show diagnostics in request activity style and simplify printer cards.",
-  "download_url": "https://raw.githubusercontent.com/pholcroft/brother-morphe-patches/dev/patches-0.2.2-dev.11.mpp",
-  "version": "0.2.2-dev.11"
+  "created_at": "2026-11-18T03:09:04",
+  "description": "Send diagnostic requests directly to the printer while recording.",
+  "download_url": "https://raw.githubusercontent.com/pholcroft/brother-morphe-patches/dev/patches-0.2.2-dev.12.mpp",
+  "version": "0.2.2-dev.12"
 }

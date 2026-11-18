@@ -33,7 +33,7 @@ If the settings controls do not appear, refresh the Morphe source and repatch th
 
 ### Advanced diagnostics
 
-Under **Manage saved printer data → Diagnostics**, you can start an optional diagnostic recording, open a preview, then return to stop recording and inspect recorded requests or export the results as CSV. It shows supported single-object SNMP GETs seen by the cache hook, whether the answer came from the cache or printer, the result, response value and elapsed hook time. Byte strings use Base64, which is encoding, not encryption. Recording is off by default, held in memory until the app process exits, and limited to the most recent 2,000 events. Nothing is sent automatically.
+Under **Manage saved printer data → Diagnostics**, you can start an optional diagnostic recording, open a preview, then return to stop recording and inspect recorded requests or export the results as CSV. While recording, supported requests go directly to the printer and live replies can still refresh saved responses. Stopping returns to your usual cache behavior. The recorder shows the result, response value and elapsed hook time for supported single-object SNMP GETs. Byte strings use Base64, which is encoding, not encryption. Recording is off by default, held in memory until the app process exits, and limited to the most recent 2,000 events. Nothing is sent automatically.
 
 CSV exports may contain printer IP addresses, identifiers and response data. Review them before sharing. The recorder does not capture discovery, other protocols, every failure or print-job data; hook times are not tap-to-preview timings.
 

@@ -26,7 +26,11 @@ public final class Diagnostics {
     public static synchronized int dropped(){return dropped;}
     public static void abandon(){PENDING.remove();}
     public static void begin(String ip,String oid){begin(ip,oid,-1);}
-    public static void begin(String ip,String oid,long sequence){if(recording)PENDING.set(new Pending(ip,oid,sequence));else PENDING.remove();}
+    public static synchronized boolean begin(String ip,String oid,long sequence){
+        if(!recording){PENDING.remove();return false;}
+        PENDING.set(new Pending(ip,oid,sequence));
+        return true;
+    }
     public static synchronized void finish(String source,String state,String type,String value){
         Pending p=PENDING.get();PENDING.remove();if(!recording||p==null||p.generation!=generation)return;
         if(EVENTS.size()==LIMIT){EVENTS.removeFirst();dropped++;}EVENTS.addLast(new Event(p,source,state,type,value));
