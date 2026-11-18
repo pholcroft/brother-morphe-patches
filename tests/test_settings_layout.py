@@ -41,9 +41,9 @@ assert 'â€' not in settings, 'navigation labels contain mojibake'
 assert 'Timing details and help' not in settings
 
 assert "Reset timing comparison" not in settings
-assert "Uncached replay result" in settings
+assert "Uncached replay result" not in settings
 assert "Stop uncached measurement" not in settings
-assert "View differences" in settings
+assert "View differences" not in settings
 
 assert 'menu.getMenu().add("What is this fix?")' not in settings
 assert 'infoTouch.setContentDescription("What is this fix?")' in settings
