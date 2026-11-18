@@ -1,6 +1,6 @@
 {
-  "created_at": "2026-11-18T04:54:46",
-  "description": "Show slot numbers for paper and other indexed printer requests.",
-  "download_url": "https://raw.githubusercontent.com/pholcroft/brother-morphe-patches/dev/patches-0.2.2-dev.18.mpp",
-  "version": "0.2.2-dev.18"
+  "created_at": "2026-11-18T05:04:51",
+  "description": "Prefer likely print preview activity on saved printer cards.",
+  "download_url": "https://raw.githubusercontent.com/pholcroft/brother-morphe-patches/dev/patches-0.2.2-dev.19.mpp",
+  "version": "0.2.2-dev.19"
 }

@@ -37,7 +37,7 @@ public final class HistoryRuntimeTest {
         if(!"integer:9".equals(reader.getCached(id,contextId,"1.2.3")))throw new AssertionError("learned cache entry must be durable");
         java.util.concurrent.CountDownLatch firstLoaded=new java.util.concurrent.CountDownLatch(1);
         final ActivityBurst[] displayed={null};
-        HistoryRuntime.loadLatest(address,mac,(burst,error)->{displayed[0]=burst;firstLoaded.countDown();});
+        HistoryRuntime.loadCardBurst(address,mac,(burst,error)->{displayed[0]=burst;firstLoaded.countDown();});
         if(!firstLoaded.await(5,java.util.concurrent.TimeUnit.SECONDS)||displayed[0]==null)throw new AssertionError("card must load a stored burst");
         CommunicationTiming.request(address,AutoCache.generation(),mac);
         CommunicationTiming.Capture later=CommunicationTiming.capture(address,new ReplayEngine.Spec("1.2.3","private-test-community",0,2,161,1000,1));

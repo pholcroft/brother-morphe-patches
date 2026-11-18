@@ -149,11 +149,11 @@ public final class HistoryRuntime {
         ExecutorService target=worker;if(target==null){callback.complete(null,"Printer history is unavailable.");return;}
         target.execute(()->{try{ActivityStore db=store;if(db==null){callback.complete(null,"Printer history is unavailable.");return;}ActivityBurst burst=db.loadBurst(ref.printerId,ref.burstId);callback.complete(burst!=null&&burst.ref.sequence==ref.sequence?burst:null,null);}catch(RuntimeException e){failure=e;callback.complete(null,"Could not load printer activity.");}});
     }
-    public static void loadLatest(String ip,String mac,LatestCallback callback){
+    public static void loadCardBurst(String ip,String mac,LatestCallback callback){
         ExecutorService target=worker;if(target==null){callback.complete(null,"Printer history is unavailable.");return;}
         target.execute(()->{try{ActivityStore db=store;if(db==null){callback.complete(null,"Printer history is unavailable.");return;}
             String id=mac==null||mac.isEmpty()?db.findPrinterIdByAddress(ip):db.findPrinterIdByMac(mac);
-            callback.complete(id==null?null:db.latestBurst(id),null);
+            callback.complete(id==null?null:db.preferredCardBurst(id),null);
         }catch(RuntimeException e){failure=e;callback.complete(null,"Could not load printer activity.");}});
     }
     public static void startReplay(ActivityBurst.Ref ref,ReplayCallback callback){
