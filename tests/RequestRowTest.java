@@ -12,6 +12,10 @@ public final class RequestRowTest {
   String row=RequestRow.format(decoded,0,1000000L,false);if(!row.contains("6")||!row.contains("PostScript"))throw new AssertionError("show both original and interpreted values: "+row);
   RequestRecord unknownValue=new RequestRecord("u",0,"1.3.6.1.2.1.43.15.1.1.2.1.1",0,1,true,"integer:987".getBytes(StandardCharsets.UTF_8));
   if(!RequestRow.format(unknownValue,0,1L,false).contains("987")||RequestRow.format(unknownValue,0,1L,false).contains("PostScript"))throw new AssertionError("unknown values must retain raw numbers");
+  String longValue = new String(new char[160]).replace('\0','x') + "-end";
+  String encoded = "octets:" + java.util.Base64.getEncoder().encodeToString(longValue.getBytes(StandardCharsets.UTF_8));
+  if(!RequestRow.format(item(false,-1,encoded,RequestRecord.Outcome.SUCCESS),0,100000000L,false).endsWith(longValue))
+   throw new AssertionError("saved request signatures must keep the full response for expansion and copy");
   String failure=RequestRow.format(item(false,-1,null,RequestRecord.Outcome.TIMEOUT),0,100000000L,false);if(!failure.contains("Timed out"))throw new AssertionError(failure);
  }
 }

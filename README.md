@@ -55,7 +55,7 @@ Have another Brother model or one with extra features? Export a diagnostic recor
 
 ## Request dictionary and trace exploration
 
-The contributor-editable [request dictionary](data/oid-dictionary.json) maps known SNMP object prefixes to names, descriptions, sources and verified integer-value meanings. To add or correct an entry, edit that file, run `python tools/generate_oid_dictionary.py`, and include the generated Java in your pull request. Unknown requests are left unnamed. Tap a burst in activity history to view its requests, responses and simulated uncached timings. Tap a request for its dictionary description, or use the screen menu to export that burst.
+The contributor-editable [request dictionary](data/oid-dictionary.json) maps known SNMP object prefixes to names, descriptions, sources and verified integer-value meanings. To add or correct an entry, edit that file, run `python tools/generate_oid_dictionary.py`, and include the generated Java in your pull request. Unknown requests are left unnamed. Tap a burst in activity history to view its requests, responses and simulated uncached timings. Tap a request to expand a shortened response or copy the full value. Touch and hold a request for its dictionary description, or use the screen menu to export that burst.
 
 See the [trace and comparison design notes](docs/TRACE-AND-COMPARISONS.md) for format research and an optional contribution concept. The app does not currently upload activity.
 

@@ -1,6 +1,6 @@
 {
-  "created_at": "2026-11-18T04:02:01",
-  "description": "Browse, expand and copy all retained diagnostic requests.",
-  "download_url": "https://raw.githubusercontent.com/pholcroft/brother-morphe-patches/dev/patches-0.2.2-dev.14.mpp",
-  "version": "0.2.2-dev.14"
+  "created_at": "2026-11-18T04:11:28",
+  "description": "Share numbered request rows with tap-to-expand and copy across both screens.",
+  "download_url": "https://raw.githubusercontent.com/pholcroft/brother-morphe-patches/dev/patches-0.2.2-dev.15.mpp",
+  "version": "0.2.2-dev.15"
 }

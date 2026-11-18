@@ -2,8 +2,6 @@ package app.template.extension.extension;
 
 import android.app.Activity;
 import android.app.AlertDialog;
-import android.content.ClipData;
-import android.content.ClipboardManager;
 import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.Typeface;
@@ -17,8 +15,6 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.PopupMenu;
-import android.widget.BaseAdapter;
-import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 import java.io.OutputStream;
@@ -28,9 +24,7 @@ import java.nio.charset.StandardCharsets;
 public final class DiagnosticsActivity extends Activity {
     private static final int EXPORT=42,NAVY=0xff182a43,TEXT=0xff212121,MUTED=0xff666666,RECORDING_RED=0xffad241f;
     private final Handler handler=new Handler(Looper.getMainLooper());
-    private TextView status,count,dropped;private Button toggle;private ListView events;
-    private final RequestAdapter requests = new RequestAdapter();
-    private long expandedNumber = -1;
+    private TextView status,count,dropped;private Button toggle;private RequestListView requests;
     private int lastCount=-1,lastDropped=-1;private boolean lastRecording,active;
     private final Runnable refresh=new Runnable(){public void run(){if(!active)return;update();handler.postDelayed(this,750);}};
     private int dp(float n){return (int)(n*getResources().getDisplayMetrics().density+0.5f);}
@@ -51,48 +45,11 @@ public final class DiagnosticsActivity extends Activity {
         count=text("",15,MUTED);count.setPadding(0,dp(5),0,0);content.addView(count);
         dropped=text("",13,MUTED);content.addView(dropped);
         toggle=new Button(this);toggle.setAllCaps(false);toggle.setOnClickListener(v->{if(Diagnostics.isRecording())Diagnostics.stop();else Diagnostics.start();lastCount=-1;update();});LinearLayout.LayoutParams buttonParams=new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,ViewGroup.LayoutParams.WRAP_CONTENT);buttonParams.topMargin=dp(14);content.addView(toggle,buttonParams);
-        LinearLayout columns = new LinearLayout(this);
-        columns.setPadding(dp(16), dp(10), dp(16), dp(10));
-        columns.setBackgroundColor(0xffd9efec);
-        LinearLayout.LayoutParams columnParams = new LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        columnParams.topMargin = dp(20);
-        TextView time = text("Time", 14, TEXT);
-        time.setTypeface(null, Typeface.BOLD);
-        columns.addView(time, new LinearLayout.LayoutParams(dp(100), ViewGroup.LayoutParams.WRAP_CONTENT));
-        TextView name = text("Request / response", 14, TEXT);
-        name.setTypeface(null, Typeface.BOLD);
-        columns.addView(name);
-        root.addView(columns, columnParams);
-
-        android.widget.FrameLayout listArea = new android.widget.FrameLayout(this);
-        root.addView(listArea, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1));
-        events = new ListView(this);
-        events.setDivider(new android.graphics.drawable.ColorDrawable(0xffd9dfe2));
-        events.setDividerHeight(dp(1));
-        events.setAdapter(requests);
-        listArea.addView(events, new android.widget.FrameLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
-        TextView empty = text("Your recorded requests will appear here.", 14, MUTED);
-        empty.setPadding(dp(16), dp(16), dp(16), 0);
-        listArea.addView(empty);
-        events.setEmptyView(empty);
-        events.setOnItemClickListener((parent, view, position, id) -> {
-            RequestRowView row = (RequestRowView) view;
-            android.text.Layout layout = row.response.getLayout();
-            if (layout != null && layout.getLineCount() > 0
-                    && layout.getEllipsisCount(layout.getLineCount() - 1) > 0) {
-                expandedNumber = id;
-                requests.notifyDataSetChanged();
-            } else {
-                ClipboardManager clipboard = getSystemService(ClipboardManager.class);
-                if (clipboard == null || row.response.length() == 0) return;
-                clipboard.setPrimaryClip(ClipData.newPlainText("Printer response", row.response.getText()));
-                if (android.os.Build.VERSION.SDK_INT < 33) {
-                    Toast.makeText(this, "Response copied", Toast.LENGTH_SHORT).show();
-                }
-            }
-        });
+        requests = new RequestListView(this, "Your recorded requests will appear here.");
+        LinearLayout.LayoutParams tableParams = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, 0, 1);
+        tableParams.topMargin = dp(20);
+        root.addView(requests, tableParams);
         setContentView(root);
         update();
     }
@@ -104,61 +61,12 @@ public final class DiagnosticsActivity extends Activity {
         toggle.setTextColor(Color.WHITE);
         dropped.setText(discarded>0?discarded+" older requests discarded":"");dropped.setVisibility(discarded>0?View.VISIBLE:View.GONE);
         Diagnostics.RecordingSnapshot snapshot = Diagnostics.snapshot();
-        requests.snapshot = snapshot;
-        if (expandedNumber <= snapshot.dropped) expandedNumber = -1;
-        requests.notifyDataSetChanged();
-    }
-
-    private final class RequestRowView extends LinearLayout {
-        final TextView number = text("", 12, MUTED);
-        final TextView offset = text("", 14, TEXT);
-        final TextView duration = text("", 13, 0xff777d86);
-        final TextView name = text("", 15, TEXT);
-        final TextView response = text("", 14, 0xff343c47);
-
-        RequestRowView() {
-            super(DiagnosticsActivity.this);
-            setPadding(dp(16), dp(11), dp(16), dp(11));
-            LinearLayout times = new LinearLayout(DiagnosticsActivity.this);
-            times.setOrientation(VERTICAL);
-            times.addView(number);
-            times.addView(offset);
-            times.addView(duration);
-            addView(times, new LayoutParams(dp(100), ViewGroup.LayoutParams.WRAP_CONTENT));
-
-            LinearLayout values = new LinearLayout(DiagnosticsActivity.this);
-            values.setOrientation(VERTICAL);
-            name.setTypeface(null, Typeface.BOLD);
-            values.addView(name);
-            values.addView(response);
-            addView(values, new LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1));
-        }
-    }
-
-    private final class RequestAdapter extends BaseAdapter {
-        Diagnostics.RecordingSnapshot snapshot;
-
-        @Override public int getCount() { return snapshot == null ? 0 : snapshot.events.size(); }
-        @Override public Diagnostics.RecentEvent getItem(int position) { return snapshot.events.get(position); }
-        @Override public long getItemId(int position) { return snapshot.dropped + 1L + position; }
-        @Override public boolean hasStableIds() { return true; }
-
-        @Override public View getView(int position, View recycled, ViewGroup parent) {
-            RequestRowView row = recycled == null ? new RequestRowView() : (RequestRowView) recycled;
-            Diagnostics.RecentEvent event = getItem(position);
-            long number = getItemId(position);
-            row.number.setText("#" + number);
-            row.offset.setText(String.format(java.util.Locale.ROOT, "%.3f s",
-                    (event.startNanos - snapshot.firstStart) / 1e9));
-            row.duration.setText(event.millis + " ms");
-            OidDictionary.Entry entry = OidDictionary.lookup(event.oid);
-            row.name.setText(entry == null ? "Unknown request" : entry.name);
-            boolean expanded = number == expandedNumber;
-            row.response.setMaxLines(expanded ? Integer.MAX_VALUE : 3);
-            row.response.setEllipsize(expanded ? null : android.text.TextUtils.TruncateAt.END);
-            row.response.setText(responseValue(event));
-            return row;
-        }
+        requests.setRows(snapshot.dropped + 1L, snapshot.events.size(), position -> {
+            Diagnostics.RecentEvent event = snapshot.events.get(position);
+            return new RequestListView.Row(
+                    RequestRow.offset((event.startNanos - snapshot.firstStart)),
+                    event.millis + " ms", RequestRow.name(event.oid), responseValue(event));
+        });
     }
 
     private static String responseValue(Diagnostics.RecentEvent event) {
@@ -173,7 +81,7 @@ public final class DiagnosticsActivity extends Activity {
 
     private void showMenu(View anchor){PopupMenu popup=new PopupMenu(this,anchor);android.view.MenuItem export=popup.getMenu().add("Export CSV"),clear=popup.getMenu().add("Clear recording"),about=popup.getMenu().add("About diagnostic recording"),share=popup.getMenu().add("How to share");export.setEnabled(Diagnostics.count()>0);clear.setEnabled(Diagnostics.count()>0);popup.setOnMenuItemClickListener(item->{if(item==export)export();else if(item==clear)clear();else if(item==about)about();else if(item==share)share();return true;});popup.show();}
     private void export(){new AlertDialog.Builder(this).setTitle("Export diagnostic recording?").setMessage("The CSV can contain printer addresses, identifiers and responses. Review it before sharing.").setNegativeButton("Cancel",null).setPositiveButton("Export",(d,w)->{Intent i=new Intent(Intent.ACTION_CREATE_DOCUMENT);i.addCategory(Intent.CATEGORY_OPENABLE);i.setType("text/csv");String timestamp=new java.text.SimpleDateFormat("yyyy-MM-dd_HH-mm-ss",java.util.Locale.ROOT).format(new java.util.Date());i.putExtra(Intent.EXTRA_TITLE,"printer-diagnostics-"+timestamp+".csv");startActivityForResult(i,EXPORT);}).show();}
-    private void clear(){new AlertDialog.Builder(this).setTitle("Clear diagnostic recording?").setMessage("This does not clear saved printer responses.").setNegativeButton("Cancel",null).setPositiveButton("Clear",(d,w)->{Diagnostics.clear();expandedNumber=-1;lastCount=-1;update();}).show();}
+    private void clear(){new AlertDialog.Builder(this).setTitle("Clear diagnostic recording?").setMessage("This does not clear saved printer responses.").setNegativeButton("Cancel",null).setPositiveButton("Clear",(d,w)->{Diagnostics.clear();requests.resetExpansion();lastCount=-1;update();}).show();}
     private void about(){new AlertDialog.Builder(this).setTitle("About diagnostic recording").setMessage("While recording, supported SNMP requests go directly to the printer. Stopping restores your usual cache behavior. It does not include discovery, other protocols, every failure or print-job data. Times are measured from the first retained request; durations are request hook times, not print preview time. The list and CSV include all retained requests. Tap a shortened response to expand it, then tap again to copy. A short response copies on the first tap.\n\nRecording continues when you leave this screen so you can open a print preview. It ends when you tap Stop recording or the app process closes. Up to 2,000 recent events are kept in memory. Nothing is sent automatically.").setPositiveButton("Close",null).show();}
     private void share(){new AlertDialog.Builder(this).setTitle("Share diagnostic results").setMessage("Stop recording and export the CSV. Review it first: printer addresses, identifiers and response values may be included. Base64 is encoding, not encryption. You can attach the file to a GitHub issue yourself. Nothing is sent automatically.").setNegativeButton("Close",null).setPositiveButton("Open issues",(d,w)->startActivity(new Intent(Intent.ACTION_VIEW,Uri.parse("https://github.com/pholcroft/brother-morphe-patches/issues")))).show();}
     @Override protected void onActivityResult(int request,int result,Intent data){super.onActivityResult(request,result,data);if(request!=EXPORT||result!=RESULT_OK||data==null||data.getData()==null)return;

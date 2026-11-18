@@ -22,6 +22,11 @@ public final class HistoryUiTest {
         if(view instanceof TextView&&((TextView)view).getText().toString().contains(text))return view;
         if(view instanceof ViewGroup){ViewGroup group=(ViewGroup)view;for(int i=0;i<group.getChildCount();i++){View found=find(group.getChildAt(i),text);if(found!=null)return found;}}return null;
     }
+    private static View findExact(View view,String text){
+        if(view instanceof TextView&&text.contentEquals(((TextView)view).getText()))return view;
+        if(view instanceof ViewGroup){ViewGroup group=(ViewGroup)view;for(int i=0;i<group.getChildCount();i++){View match=findExact(group.getChildAt(i),text);if(match!=null)return match;}}
+        return null;
+    }
     public static void run(Instrumentation instrumentation,Context context)throws Exception{
         ActivityStore store=new ActivityStore(context);String ip="192.0.2.88",mac="02:01:02:03:04:08";
         PrinterRecord printer=store.resolveVerified(ip,mac,"Synthetic printer");long sequence=store.reserveSequences(1);
@@ -58,6 +63,16 @@ public final class HistoryUiTest {
         if(selected[0]==null)throw new AssertionError("burst row missing");instrumentation.runOnMainSync(()->{View target=selected[0];while(!target.isClickable()&&target.getParent() instanceof View)target=(View)target.getParent();target.performClick();});instrumentation.waitForIdleSync();
         boolean[] screen={false};instrumentation.runOnMainSync(()->screen[0]=contains(activity.getWindow().getDecorView(),"Request activity")&&contains(activity.getWindow().getDecorView(),"System description")&&contains(activity.getWindow().getDecorView(),"Brother")&&contains(activity.getWindow().getDecorView(),"0.000 s")&&contains(activity.getWindow().getDecorView(),"~75 ms")&&contains(activity.getWindow().getDecorView(),"0.075 s")&&contains(activity.getWindow().getDecorView(),"6 (PostScript)"));
         if(!screen[0])throw new AssertionError("clicking a burst should show the full request screen with names, values and timings");
+        instrumentation.runOnMainSync(()->{
+            View number=findExact(activity.getWindow().getDecorView(),"#1");
+            if(number==null || !(number.getParent().getParent().getParent().getParent().getParent() instanceof RequestListView))
+                throw new AssertionError("request activity must show numbered rows in the shared list");
+            android.widget.ListView list=(android.widget.ListView)number.getParent().getParent().getParent();
+            list.performItemClick(list.getChildAt(0),0,list.getAdapter().getItemId(0));
+            android.content.ClipboardManager clipboard=activity.getSystemService(android.content.ClipboardManager.class);
+            if(!"Brother".contentEquals(clipboard.getPrimaryClip().getItemAt(0).getText()))
+                throw new AssertionError("tapping a short saved response must copy it");
+        });
         android.accessibilityservice.AccessibilityServiceInfo accessibility=instrumentation.getUiAutomation().getServiceInfo();accessibility.flags|=android.accessibilityservice.AccessibilityServiceInfo.FLAG_RETRIEVE_INTERACTIVE_WINDOWS;instrumentation.getUiAutomation().setServiceInfo(accessibility);
         View[] activityMenu={null};instrumentation.runOnMainSync(()->activityMenu[0]=findDescription(activity.getWindow().getDecorView(),"Activity options"));
         if(activityMenu[0]==null)throw new AssertionError("request activity menu is missing");

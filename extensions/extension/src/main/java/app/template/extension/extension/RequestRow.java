@@ -2,20 +2,35 @@ package app.template.extension.extension;
 
 import java.util.Locale;
 
-/** Compact request list text. Full identifiers and values remain available in details. */
+/** Formats values and timings for display in request lists. */
 public final class RequestRow {
- public static String format(RequestRecord request,long offsetNanos,long durationNanos,boolean estimated){
-  OidDictionary.Entry entry=OidDictionary.lookup(request.oid);String name=entry==null?"Unknown request":entry.name;
-  String value;
-  if(request.outcome==RequestRecord.Outcome.TIMEOUT)value="Timed out";
-  else if(request.outcome==RequestRecord.Outcome.CANCELLED)value="Cancelled";
-  else if(request.outcome==RequestRecord.Outcome.ERROR&&request.response()==null)value="Request failed";
-  else value=SnmpValueFormatter.format(request.response(),request.oid);
-  value=value.replaceAll("[\\r\\n\\t]+"," ").trim();if(value.isEmpty())value="Empty response";
-  if(value.length()>120)value=value.substring(0,117)+"...";
-  String offset=offsetNanos<0?"time unavailable":String.format(Locale.ROOT,"%.3f s",offsetNanos/1e9);
-  String duration=durationNanos<0?"duration unavailable":String.format(Locale.ROOT,"%s%.0f ms",estimated?"~":"",durationNanos/1e6);
-  return offset+" · "+duration+" · "+name+"\n"+value;
- }
- private RequestRow(){}
+    static String name(String oid) {
+        OidDictionary.Entry entry = OidDictionary.lookup(oid);
+        return entry == null ? "Unknown request" : entry.name;
+    }
+
+    static String response(RequestRecord request) {
+        if (request.outcome == RequestRecord.Outcome.TIMEOUT) return "Timed out";
+        if (request.outcome == RequestRecord.Outcome.CANCELLED) return "Cancelled";
+        byte[] response = request.response();
+        if (request.outcome == RequestRecord.Outcome.ERROR && response == null) return "Request failed";
+        String value = SnmpValueFormatter.format(response, request.oid);
+        return value.trim().isEmpty() ? "Empty response" : value;
+    }
+
+    static String offset(long nanos) {
+        return nanos < 0 ? "time unavailable" : String.format(Locale.ROOT, "%.3f s", nanos / 1e9);
+    }
+
+    static String duration(long nanos, boolean estimated) {
+        return nanos < 0 ? "duration unavailable" :
+                String.format(Locale.ROOT, "%s%.0f ms", estimated ? "~" : "", nanos / 1e6);
+    }
+
+    public static String format(RequestRecord request, long offsetNanos, long durationNanos, boolean estimated) {
+        return offset(offsetNanos) + " · " + duration(durationNanos, estimated) + " · " +
+                name(request.oid) + "\n" + response(request);
+    }
+
+    private RequestRow() {}
 }

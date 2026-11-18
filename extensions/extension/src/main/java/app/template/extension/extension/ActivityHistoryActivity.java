@@ -80,15 +80,19 @@ public final class ActivityHistoryActivity extends Activity {
         TextView back=text("\u2039",32,Color.WHITE);back.setGravity(android.view.Gravity.CENTER);back.setContentDescription("Back");back.setOnClickListener(v->onBackPressed());header.addView(back,new LinearLayout.LayoutParams(dp(56),dp(64)));
         LinearLayout labels=new LinearLayout(this);labels.setOrientation(LinearLayout.VERTICAL);TextView title=text("Request activity",20,Color.WHITE);title.setTypeface(null,Typeface.BOLD);labels.addView(title);labels.addView(text("Burst #"+burst.ref.sequence+" · Estimated uncached",13,Color.WHITE));header.addView(labels,new LinearLayout.LayoutParams(0,ViewGroup.LayoutParams.WRAP_CONTENT,1));
         TextView menu=text("\u22ee",26,Color.WHITE);menu.setGravity(android.view.Gravity.CENTER);menu.setContentDescription("Activity options");menu.setOnClickListener(v->{android.widget.PopupMenu popup=new android.widget.PopupMenu(this,menu);popup.getMenu().add("Export activity");popup.setOnMenuItemClickListener(item->{exportBurst(burst.ref);return true;});popup.show();});header.addView(menu,new LinearLayout.LayoutParams(dp(48),dp(64)));
-        LinearLayout columnHeader=new LinearLayout(this);columnHeader.setGravity(android.view.Gravity.CENTER_VERTICAL);columnHeader.setPadding(dp(16),dp(10),dp(16),dp(10));columnHeader.setBackgroundColor(0xffd9efec);TextView timeHeader=text("Time",14,0xff212121);timeHeader.setTypeface(null,Typeface.BOLD);columnHeader.addView(timeHeader,new LinearLayout.LayoutParams(dp(100),ViewGroup.LayoutParams.WRAP_CONTENT));TextView requestHeader=text("Request / response",14,0xff212121);requestHeader.setTypeface(null,Typeface.BOLD);columnHeader.addView(requestHeader,new LinearLayout.LayoutParams(0,ViewGroup.LayoutParams.WRAP_CONTENT,1));root.addView(columnHeader);
-        List<RequestRecord> requests=burst.requests();long[] durations=RequestTimeline.durations(requests),offsets=RequestTimeline.offsets(durations);
-        android.widget.ListView list=new android.widget.ListView(this);list.setBackgroundColor(Color.WHITE);list.setDivider(new android.graphics.drawable.ColorDrawable(0xffd9dfe2));list.setDividerHeight(dp(1));
-        android.widget.BaseAdapter adapter=new android.widget.BaseAdapter(){public int getCount(){return requests.size();}public Object getItem(int position){return requests.get(position);}public long getItemId(int position){return position;}
-            @Override public android.view.View getView(int position,android.view.View convert,ViewGroup parent){
-                LinearLayout row;if(convert instanceof LinearLayout)row=(LinearLayout)convert;else{row=new LinearLayout(ActivityHistoryActivity.this);row.setOrientation(LinearLayout.HORIZONTAL);row.setPadding(dp(16),dp(11),dp(16),dp(11));LinearLayout times=new LinearLayout(ActivityHistoryActivity.this);times.setOrientation(LinearLayout.VERTICAL);times.addView(text("",14,0xff212121));times.addView(text("",13,0xff777d86));row.addView(times,new LinearLayout.LayoutParams(dp(100),ViewGroup.LayoutParams.WRAP_CONTENT));LinearLayout values=new LinearLayout(ActivityHistoryActivity.this);values.setOrientation(LinearLayout.VERTICAL);TextView name=text("",15,0xff212121);name.setTypeface(null,Typeface.BOLD);values.addView(name);TextView value=text("",14,0xff343c47);value.setMaxLines(3);value.setEllipsize(android.text.TextUtils.TruncateAt.END);values.addView(value);row.addView(values,new LinearLayout.LayoutParams(0,ViewGroup.LayoutParams.WRAP_CONTENT,1));}
-                RequestRecord request=requests.get(position);String text=RequestRow.format(request,offsets[position],durations[position],request.cached);int newline=text.indexOf('\n');String heading=newline<0?text:text.substring(0,newline),value=newline<0?"":text.substring(newline+1);String[] parts=heading.split(" · ",3);LinearLayout times=(LinearLayout)row.getChildAt(0),values=(LinearLayout)row.getChildAt(1);((TextView)times.getChildAt(0)).setText(parts.length>0?parts[0]:"");((TextView)times.getChildAt(1)).setText(parts.length>1?parts[1]:"");((TextView)values.getChildAt(0)).setText(parts.length>2?parts[2]:heading);((TextView)values.getChildAt(1)).setText(value);return row;
-            }};
-        list.setAdapter(adapter);list.setOnItemClickListener((parent,view,position,id)->showRequest(requests.get(position)));root.addView(list,new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,0,1));setContentView(root);
+        List<RequestRecord> requests = burst.requests();
+        long[] durations = RequestTimeline.durations(requests);
+        long[] offsets = RequestTimeline.offsets(durations);
+        RequestListView table = new RequestListView(this, "No requests recorded.");
+        table.setRows(1, requests.size(), position -> {
+            RequestRecord request = requests.get(position);
+            return new RequestListView.Row(RequestRow.offset(offsets[position]),
+                    RequestRow.duration(durations[position], request.cached),
+                    RequestRow.name(request.oid), RequestRow.response(request));
+        });
+        table.setOnRowLongClick(position -> showRequest(requests.get(position)));
+        root.addView(table, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1));
+        setContentView(root);
     }
     private void showRequest(RequestRecord request){OidDictionary.Entry entry=OidDictionary.lookup(request.oid);String name=entry==null?"Unknown request":entry.name;
         String description=entry==null?"This identifier has not been described in the dictionary yet.":entry.description+"\n\nMIB name: "+entry.symbol;
