@@ -35,11 +35,11 @@ If the settings controls do not appear, refresh the Morphe source and repatch th
 
 Under **Manage saved printer data → Advanced: record printer requests**, you can start an optional diagnostic recording, open a preview, then return to stop recording and inspect or export the results as CSV. It shows supported single-object SNMP GETs seen by the cache hook, whether the answer came from the cache or printer, the result, response value and elapsed hook time. Byte strings use Base64, which is encoding, not encryption. Recording is off by default, held in memory until the app process exits, and limited to the most recent 2,000 events. Nothing is sent automatically.
 
-CSV exports may contain printer IP addresses, identifiers and response data. Review them before sharing. The recorder does not capture discovery, other protocols, every failure or print-job data; hook times are not tap-to-preview timings. For full network investigation, use the [PCAPdroid guide](CAPTURING-PRINTER-TRAFFIC.md).
+CSV exports may contain printer IP addresses, identifiers and response data. Review them before sharing. The recorder does not capture discovery, other protocols, every failure or print-job data; hook times are not tap-to-preview timings.
 
 Each CSV row describes an individual recorded request and its burst sequence where available.
 
-Export filenames include the local date and time. **How to share diagnostics** explains what to review and offers separate buttons for the guide and GitHub issues; it never submits a report automatically.
+Export filenames include the local date and time. **How to share diagnostics** explains what to review and offers a link to GitHub issues; it never submits a report automatically.
 
 ## How it works and limitations
 
@@ -51,7 +51,7 @@ Read the [technical analysis and packet timelines](TECHNICAL-ANALYSIS.md) for th
 
 ## Help improve support for more printers
 
-Have another Brother model or one with extra features? A short recording of the print service's network traffic can help us understand its requests and improve the cache. Follow the [PCAPdroid capture and contribution guide](CAPTURING-PRINTER-TRAFFIC.md), including the privacy checks before sharing.
+Have another Brother model or one with extra features? Export a diagnostic recording or activity from the app and share it in a [GitHub issue](https://github.com/pholcroft/brother-morphe-patches/issues) to help improve the cache. Review the export for information you don't want to share first.
 
 ## Development
 
