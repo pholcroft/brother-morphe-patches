@@ -1,6 +1,6 @@
 {
-  "created_at": "2026-11-18T05:14:28",
-  "description": "Place the request count beside the saved time on printer cards.",
-  "download_url": "https://raw.githubusercontent.com/pholcroft/brother-morphe-patches/dev/patches-0.2.2-dev.21.mpp",
-  "version": "0.2.2-dev.21"
+  "created_at": "2026-11-18T05:19:28",
+  "description": "Faster print previews with improved printer activity and diagnostic recording.",
+  "download_url": "https://raw.githubusercontent.com/pholcroft/brother-morphe-patches/main/patches-0.2.2.mpp",
+  "version": "0.2.2"
 }
