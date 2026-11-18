@@ -39,10 +39,26 @@ public final class Diagnostics {
         public final String ip,oid,source,state,type,value;public final long millis,wall,startNanos,sequence;
         private RecentEvent(Event event){ip=event.p.ip;wall=event.p.wall;startNanos=event.p.start;sequence=event.p.sequence;oid=event.p.oid;source=event.source;state=event.state;type=event.type;value=event.value;millis=event.millis;}
     }
-    public static synchronized java.util.List<RecentEvent> recentEvents(){
-        java.util.ArrayList<RecentEvent> result=new java.util.ArrayList<>();java.util.Iterator<Event> iterator=EVENTS.descendingIterator();while(iterator.hasNext()&&result.size()<100)result.add(new RecentEvent(iterator.next()));return result;
+    public static final class RecordingSnapshot {
+        final java.util.List<RecentEvent> events;
+        final int dropped;
+        final long firstStart;
+
+        private RecordingSnapshot() {
+            events = new java.util.ArrayList<>(EVENTS.size());
+            long earliest = Long.MAX_VALUE;
+            for (Event event : EVENTS) {
+                events.add(new RecentEvent(event));
+                earliest = Math.min(earliest, event.p.start);
+            }
+            dropped = Diagnostics.dropped;
+            firstStart = events.isEmpty() ? 0 : earliest;
+        }
     }
-    public static synchronized long firstEventStart(){long start=Long.MAX_VALUE;for(Event event:EVENTS)start=Math.min(start,event.p.start);return start==Long.MAX_VALUE?0:start;}
+
+    public static synchronized RecordingSnapshot snapshot() {
+        return new RecordingSnapshot();
+    }
     private static String quote(String value){return "\""+(value==null?"":value.replace("\"","\"\""))+"\"";}
     public static synchronized String csv(){
         StringBuilder b=new StringBuilder("timestamp_unix_ms,printer_ip,burst_sequence,oid,source,result,value_type,value,duration_ms,oid_name\r\n");
